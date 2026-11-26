@@ -1,0 +1,858 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>VP ≠ VNP — the two AI proofs, a guided walk</title>
+<script>
+window.MathJax = {
+  tex: { inlineMath: [['$','$'],['\\(','\\)']], displayMath: [['$$','$$'],['\\[','\\]']], tags: 'ams' },
+  svg: { fontCache: 'global' },
+  startup: { pageReady: function(){ return MathJax.startup.defaultPageReady().then(function(){ initTabs(); }); } }
+};
+</script>
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-mml-svg.js" integrity="sha384-msWocAZtTDh+149KSxjbRTGVfGbDjiff/j0JX1iu/A/GxxTWSu6ozNemlfkag/8d" crossorigin="anonymous" async onerror="initTabs()"></script>
+<style>
+  :root{ --bg:#0f172a; --card:#1e293b; --fg:#e2e8f0; --fg2:#cbd5e1; --muted:#94a3b8;
+         --a1:#fb923c; --a2:#2dd4bf; --rule:#334155; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{ max-width:54rem; margin:2.5rem auto; padding:0 1.25rem 6rem; background:var(--bg);
+        font:16px/1.7 Georgia,'Times New Roman',serif; color:var(--fg); counter-reset:fig; }
+  h1{ font-size:1.95rem; line-height:1.2; margin:.2rem 0; }
+  h2{ font-size:1.45rem; margin:3rem 0 .7rem; border-bottom:2px solid var(--a1); padding-bottom:.25rem; }
+  h3{ font-size:1.12rem; margin:1.9rem 0 .4rem; color:var(--a1); }
+  h4{ font-size:1rem; margin:1.3rem 0 .3rem; color:var(--a2); }
+  p,li{ color:var(--fg2); }
+  a{ color:var(--a2); }
+  .sub{ color:var(--muted); font-style:italic; margin-top:0; }
+  code{ font-family:ui-monospace,Consolas,monospace; font-size:.9em; background:var(--card); padding:.05rem .3rem; border-radius:3px; color:var(--fg); }
+  pre{ background:var(--card); padding:.8rem 1rem; border-radius:5px; overflow:auto; font-size:.82rem; line-height:1.45; border:1px solid var(--rule); }
+  pre code{ background:none; padding:0; }
+  mjx-container:not([display="true"]){ display:inline-block; max-width:100%; overflow-x:auto; overflow-y:hidden; scrollbar-width:none; vertical-align:middle; }
+  mjx-container:not([display="true"])::-webkit-scrollbar{ display:none; }
+  mjx-container[display="true"]{ max-width:100%; overflow-x:auto; overflow-y:hidden; }
+  .thm,.def,.aha,.warn,.mine{ background:var(--card); padding:.65rem .95rem; margin:1rem 0; border-radius:5px; border:1px solid var(--rule); }
+  .thm{ border-color:var(--a1); } .thm > b:first-child{ color:var(--a1); }
+  .def{ border-color:var(--a2); } .def > b:first-child{ color:var(--a2); }
+  .aha{ border-color:#facc15; } .aha > b:first-child{ color:#facc15; }
+  .warn{ border-color:#f87171; } .warn > b:first-child{ color:#f87171; }
+  .mine{ border:1px dashed var(--muted); } .mine > b:first-child{ color:var(--muted); }
+  table{ border-collapse:collapse; width:100%; margin:1rem 0; font-size:.92rem; }
+  th,td{ border:1px solid var(--rule); padding:.45rem .6rem; text-align:left; vertical-align:top; color:var(--fg2); }
+  th{ background:var(--card); color:var(--fg); }
+  .tw{ overflow-x:auto; }
+  figure{ margin:1.6rem 0; text-align:center; counter-increment:fig; }
+  figcaption{ color:var(--muted); font-size:.9rem; font-style:italic; margin-top:.4rem; }
+  figcaption::before{ content:"Fig. " counter(fig) ". "; font-weight:bold; font-style:normal; color:var(--a1); }
+  figure svg text{ font-family:Georgia,'Times New Roman',serif; fill:#e2e8f0; }
+  .toc{ background:var(--card); padding:.8rem 1.2rem; border-radius:6px; font-size:.95rem; }
+  .toc ul{ list-style:none; padding-left:.6rem; margin:.3rem 0; } .toc a{ text-decoration:none; }
+  .small{ font-size:.88rem; color:var(--muted); }
+  hr{ border:none; border-top:1px solid var(--rule); margin:2.5rem 0; }
+  .src{ font-size:.82rem; color:var(--muted); }
+  .tabs{ position:sticky; top:0; z-index:5; display:flex; gap:.4rem; flex-wrap:wrap; background:var(--bg);
+         padding:.6rem 0; margin:1.2rem 0 0; border-bottom:1px solid var(--rule); }
+  .tabs button{ font:600 .9rem/1.2 ui-sans-serif,system-ui,sans-serif; color:var(--fg2); background:var(--card);
+         border:1px solid var(--rule); border-radius:5px; padding:.5rem .8rem; cursor:pointer; }
+  .tabs button[aria-selected="true"]{ color:#0f172a; background:var(--a1); border-color:var(--a1); }
+  .tabs button:focus-visible{ outline:2px solid var(--a2); outline-offset:2px; }
+  .panel[hidden]{ display:none; }
+  .panel h2:first-child{ margin-top:1.4rem; }
+  [id]{ scroll-margin-top:4rem; }
+  details.toc summary{ cursor:pointer; font-weight:bold; color:var(--fg); }
+</style>
+</head>
+<body>
+
+<h1>VP ≠ VNP: the two AI proofs, a guided walk</h1>
+<p class="sub">Background on P versus NP, a step-by-step tutorial on the Anthropic proof, a step-by-step tutorial on the OpenAI proof, and a comparison of the two. Written 25 November 2026 for a reader who took one complexity course and forgot most of it.</p>
+
+<div class="warn"><b>Status of the claims. Read this first.</b>
+<ul>
+<li>Both papers say that an AI model found and wrote the proof. The Anthropic paper says: "No human mathematician has checked the proofs." The OpenAI repository calls its manuscripts "a form of raw research data, rather than polished academic papers."</li>
+<li>Each proof comes with a Lean 4 formalization. Lean is a program that checks a proof line by line. I read the Lean statement files. I did not run the Lean builds, so the build status below is what the repositories state.</li>
+<li>This tutorial explains what the papers say. It is not an independent verification. Where I give my own reading or judgment, a dashed box marks it.</li>
+<li>Neither result settles P versus NP. Both papers say so.</li>
+</ul></div>
+
+<details class="toc">
+<summary>Contents (all four parts)</summary>
+<ul>
+<li><b>Part A. Background</b>
+  <ul>
+  <li><a href="#a1">A1. P versus NP in five minutes</a></li>
+  <li><a href="#a2">A2. Arithmetic circuits: computing a polynomial, not a function</a></li>
+  <li><a href="#a3">A3. VP, VNP, the determinant and the permanent</a></li>
+  <li><a href="#a4">A4. How VP versus VNP relates to P versus NP</a></li>
+  <li><a href="#a5">A5. Why the problem resisted proof</a></li>
+  <li><a href="#a6">A6. The shared toolbox: tensors, wires, rank, cuts, limits, diagonalization</a></li>
+  </ul></li>
+<li><b>Part B. The Anthropic proof</b>
+  <ul>
+  <li><a href="#b0">B0. What is proved</a></li>
+  <li><a href="#b1">B1. Map of the proof</a></li>
+  <li><a href="#b2">B2. Step 1: measure tensors with spectral points; get distances</a></li>
+  <li><a href="#b3">B3. Step 2: low rank means "routes through two hubs"</a></li>
+  <li><a href="#b4">B4. Step 3: a circuit gives low rank across balanced cuts</a></li>
+  <li><a href="#b5">B5. Step 4: two crossing wires force nonpositive curvature</a></li>
+  <li><a href="#b6">B6. Step 5: the two cases</a></li>
+  <li><a href="#b7">B7. The flat case, with numbers</a></li>
+  <li><a href="#b8">B8. The contracting case: accelerators cannot exist</a></li>
+  <li><a href="#b9">B9. All fields, Hamiltonian cycle, approximation</a></li>
+  <li><a href="#b10">B10. Why the proof fails for the determinant and for Boolean circuits</a></li>
+  <li><a href="#b11">B11. The Lean formalization</a></li>
+  <li><a href="#b12">B12. All the AHA moments</a></li>
+  </ul></li>
+<li><b>Part C. The OpenAI proof</b>
+  <ul>
+  <li><a href="#c0">C0. What is proved</a></li>
+  <li><a href="#c1">C1. The witness polynomial: a universal machine in the coefficients</a></li>
+  <li><a href="#c2">C2. The hinge: strict shortening</a></li>
+  <li><a href="#c3">C3. Case 1: wire cannot be saved</a></li>
+  <li><a href="#c4">C4. Case 2: the stretch theorem and its two lemmas</a></li>
+  <li><a href="#c5">C5. The boundary lemma: reading a limit with residues</a></li>
+  <li><a href="#c6">C6. The replay lemma: architecture</a></li>
+  <li><a href="#c7">C7. Packing: the epoch lemma</a></li>
+  <li><a href="#c8">C8. The final squeeze: 11/12</a></li>
+  <li><a href="#c9">C9. Assembly and the accounting identity</a></li>
+  <li><a href="#c10">C10. The Lean formalization and the 24 November papers</a></li>
+  <li><a href="#c11">C11. All the AHA moments</a></li>
+  </ul></li>
+<li><b>Part D. Comparison</b>
+  <ul>
+  <li><a href="#d1">D1. Same skeleton</a></li>
+  <li><a href="#d2">D2. Results side by side</a></li>
+  <li><a href="#d3">D3. Step-by-step differences</a></li>
+  <li><a href="#d4">D4. What the machine checked</a></li>
+  <li><a href="#d5">D5. Quality, complexity, elegance, readability</a></li>
+  <li><a href="#d6">D6. What stays open</a></li>
+  </ul></li>
+<li><a href="#sources">Sources and method</a></li>
+</ul>
+</details>
+
+<div class="tabs" role="tablist" aria-label="Parts of the tutorial">
+<button type="button" role="tab" data-part="parta">A. Background</button>
+<button type="button" role="tab" data-part="partb">B. Anthropic proof</button>
+<button type="button" role="tab" data-part="partc">C. OpenAI proof</button>
+<button type="button" role="tab" data-part="partd">D. Comparison</button>
+</div>
+
+<h2 id="parta">Part A. Background</h2>
+
+<h3 id="a1">A1. P versus NP in five minutes</h3>
+
+<p>Take a puzzle such as Sudoku on a large board. To <em>check</em> a filled board is fast: look at each row, column and box. To <em>find</em> a filling can take a very long time. P versus NP asks if "fast to check" always means "fast to find".</p>
+
+<div class="def"><b>Definitions.</b>
+<ul>
+<li>A <b>decision problem</b> is a question with a yes or no answer for each input, for example "does this graph have a route that visits each city one time?"</li>
+<li><b>Polynomial time</b> means: the number of steps is at most $n^c$ for an input of $n$ bits and some fixed number $c$.</li>
+<li><b>P</b> is the set of decision problems that a computer solves in polynomial time.</li>
+<li><b>NP</b> is the set of decision problems where a "yes" answer has a short proof, called a <b>certificate</b>, that a computer checks in polynomial time. For Sudoku the certificate is the filled board.</li>
+<li>A problem is <b>NP-complete</b> if it is in NP and each NP problem translates into it in polynomial time. SAT (is this logic formula satisfiable?) and Hamiltonian cycle are NP-complete. If one NP-complete problem is in P, then P = NP.</li>
+</ul></div>
+
+<p>P is inside NP, because a problem that you can solve needs no certificate. The open question is if NP is larger. Most researchers think that P ≠ NP, but nobody has proved it.</p>
+
+<p>Two more notions come back later.</p>
+<ul>
+<li><b>Boolean circuits.</b> A circuit is a fixed network of AND, OR and NOT gates. A problem has "small circuits" if, for each input length $n$, some circuit with at most $n^c$ gates solves it. The circuit for each $n$ can be different, with no rule that connects them. This is called <b>nonuniform</b> computation, and the class is named <b>P/poly</b>. The statement "NP is not inside P/poly" is stronger than P ≠ NP.</li>
+<li><b>Counting.</b> The class <b>#P</b> asks "how many certificates are there?" and not only "is there one?". Valiant showed in 1979 that to count the perfect matchings of a bipartite graph is #P-complete. That count is the permanent of a 0/1 matrix (A3).</li>
+</ul>
+
+<h3 id="a2">A2. Arithmetic circuits: computing a polynomial, not a function</h3>
+
+<p>Change the gates. Use $+$ and $\times$ in place of AND, OR, NOT. The inputs are variables $x_1,\dots,x_n$ and constants from a field (a number system with $+,-,\times,\div$, such as the rational numbers, the real numbers, or the integers modulo a prime).</p>
+
+<div class="def"><b>Definition (arithmetic circuit, as the Anthropic paper writes it).</b> An arithmetic circuit is a finite list of polynomials. Each entry is a variable, a constant, or the sum or the product of two earlier entries. The entries are the <b>gates</b>. The <b>size</b> is the length of the list. The circuit <b>computes</b> each polynomial in the list.</div>
+
+<p>Example. The list $x,\; y,\; x+y,\; (x+y)(x+y)$ has 4 gates and computes $x^2+2xy+y^2$. A polynomial with three terms came from one multiplication. Circuits can make a very large number of terms with few gates: $(x_1+y_1)(x_2+y_2)\cdots(x_n+y_n)$ has $2^n$ terms and needs about $4n$ gates.</p>
+
+<p>The important point: an arithmetic circuit must produce the polynomial <em>as a formal expression</em>. It must be correct for each input from the field and from each larger field. A Boolean circuit only has to be correct on inputs 0 and 1. This difference is the reason that the two new proofs say nothing about P versus NP (see <a href="#a4">A4</a>).</p>
+
+<h3 id="a3">A3. VP, VNP, the determinant and the permanent</h3>
+
+<p>Leslie Valiant defined the algebraic versions of P and NP in 1979.</p>
+
+<div class="def"><b>Definitions.</b> A <b>family</b> is a sequence of polynomials $f_1, f_2, f_3,\dots$
+<ul>
+<li>The family is in <b>VP</b> if the number of variables of $f_n$, its degree, and the size of its smallest circuit are each at most a polynomial in $n$. VP is "easy to compute".</li>
+<li>The family is in <b>VNP</b> if there is a VP family $g_n$ with
+$$f_n(x)=\sum_{e\in\{0,1\}^{r(n)}} g_n(x,e),$$
+where $r(n)$ is at most a polynomial in $n$. In words: take an easy polynomial that has extra variables $e$, put each 0/1 pattern into $e$, and add all the results.</li>
+</ul></div>
+
+<p>Compare with NP. In NP the extra bits $e$ are the certificate, and you ask if <em>one</em> certificate works. In VNP you <em>add over all</em> certificates. The sum has $2^{r(n)}$ terms, so the definition gives no small circuit. VP is inside VNP (take $r(n)=0$). Valiant's conjecture is VP ≠ VNP.</p>
+
+<p>Two matrix polynomials sit in the middle of the subject. Let $X=(x_{i,j})$ be an $m\times m$ matrix of variables.</p>
+
+$$\det{}_m=\sum_{\sigma}\operatorname{sign}(\sigma)\prod_{i=1}^{m}x_{i,\sigma(i)},\qquad
+\operatorname{PERM}_m=\sum_{\sigma}\prod_{i=1}^{m}x_{i,\sigma(i)} .$$
+
+<p>Each sum goes over the $m!$ permutations $\sigma$ of $\{1,\dots,m\}$. A permutation picks one entry in each row and each column, like $m$ rooks that do not attack each other. The <b>determinant</b> gives each product a sign $+1$ or $-1$. The <b>permanent</b> has no signs. For $m=2$: $\det=x_{11}x_{22}-x_{12}x_{21}$ and $\operatorname{PERM}=x_{11}x_{22}+x_{12}x_{21}$.</p>
+
+<ul>
+<li><b>The determinant is in VP.</b> The signs make terms cancel, and row reduction uses that. Circuits cannot divide, but division-free methods (Berkowitz 1984) use a polynomial number of gates.</li>
+<li><b>The permanent is in VNP.</b> Ryser's formula (1963) writes it as a sum over $2^m$ bit patterns of an easy polynomial. No method with fewer than about $2^m$ operations is known.</li>
+<li><b>The permanent is VNP-complete</b> over each field where $2\neq 0$ (Valiant 1979). "Complete" means: each VNP family is the permanent of a polynomially larger matrix after you substitute variables and constants for its entries. So over these fields, VP ≠ VNP is the same statement as "the permanent has no polynomial-size circuits".</li>
+<li>In a field of <b>characteristic two</b> (where $1+1=0$, so $-1=+1$) the permanent equals the determinant and is easy. There the <b>Hamiltonian cycle polynomial</b> $\operatorname{HC}_m$ takes its place. It is the same sum, but only over the $(m-1)!$ permutations that form one cycle through all $m$ points. $\operatorname{HC}_m$ is VNP-complete over each field.</li>
+</ul>
+
+<h3 id="a4">A4. How VP versus VNP relates to P versus NP</h3>
+
+<div class="tw"><table>
+<tr><th></th><th>Boolean world</th><th>Algebraic world (Valiant)</th></tr>
+<tr><td>Object computed</td><td>A yes/no function on bit strings</td><td>A polynomial, as a formal expression</td></tr>
+<tr><td>Gates</td><td>AND, OR, NOT</td><td>$+$ and $\times$ over a field</td></tr>
+<tr><td>Must be correct on</td><td>inputs 0 and 1</td><td>each element of the field and of each larger field</td></tr>
+<tr><td>"Easy" class</td><td>P (uniform), P/poly (circuits)</td><td>VP</td></tr>
+<tr><td>"Hard to find, easy to check" class</td><td>NP: <em>is there</em> a certificate?</td><td>VNP: <em>sum over all</em> certificates</td></tr>
+<tr><td>Complete problem</td><td>SAT, Hamiltonian cycle</td><td>permanent ($2\neq 0$), Hamiltonian cycle polynomial</td></tr>
+<tr><td>Closest Boolean relative of VNP</td><td colspan="2">#P (counting). The permanent of a 0/1 matrix is #P-complete.</td></tr>
+</table></div>
+
+<p>The logical relations, as the Anthropic paper states them (Section 1.3, citing Bürgisser):</p>
+<ul>
+<li><b>Boolean ⇒ algebraic is known, with a condition.</b> If NP is not inside P/poly, then VP ≠ VNP over the complex numbers, provided that the Riemann hypothesis for Dedekind zeta functions holds. So VP ≠ VNP is a <em>consequence</em> of the strong Boolean conjecture. It is the easier statement and a necessary first step.</li>
+<li><b>Algebraic ⇒ Boolean is not known.</b> No theorem says that VP ≠ VNP implies P ≠ NP. The two papers prove the first statement. The second one stays open.</li>
+</ul>
+
+<p>Why does the algebraic result not transfer? The Anthropic paper gives a concrete reason. A Boolean circuit for $\operatorname{HC}_m$ only has to be right on 0 and 1. So it can compute a different polynomial</p>
+$$g=\operatorname{HC}_m+\sum_i (x_i^2-x_i)\,h_i ,$$
+<p>for any polynomials $h_i$. Each term $x_i^2-x_i$ is zero when $x_i$ is 0 or 1, so $g$ and $\operatorname{HC}_m$ agree on all 0/1 inputs. But as polynomials they are different, and the parts of the polynomial that the proofs examine can change completely. The paper's example: $(x_{1,1}^2-x_{1,1})\,x_{2,1}\cdots x_{k,1}$ is zero on all 0/1 inputs, but its part that is linear in each block of variables is $-x_{1,1}x_{2,1}\cdots x_{k,1}$, which is not zero.</p>
+
+<h3 id="a5">A5. Why the problem resisted proof</h3>
+
+<p>A lower bound must exclude <em>each</em> circuit. That includes circuits that build very large intermediate polynomials and then cancel most of them.</p>
+<ul>
+<li><b>Best earlier bound for general circuits.</b> For an explicit polynomial of degree $d$ in $n$ variables: order $n\log d$ gates (Strassen; Baur and Strassen). For $\operatorname{PERM}_m$, which has $m^2$ variables, that is about $m^2\log m$. The conjecture needs more than each polynomial in $m$.</li>
+<li><b>Strong bounds existed only for restricted circuits.</b> Exponential bounds for monotone circuits (no subtraction). Superpolynomial bounds for circuits of constant depth (Limaye, Srinivasan, Tavenas). Both papers list these.</li>
+<li><b>The usual tool is rank.</b> Split the variables into two groups. Write the coefficients of the polynomial in a matrix: rows for one group, columns for the other. The rank of that matrix measures how much the two groups "talk". A small restricted circuit gives a small rank, and a hard polynomial has a large rank.</li>
+<li><b>The obstacle, in OpenAI's words:</b> "circuits give us low ranks across <em>varying</em> cuts, which is quite different from a single matrix." A general circuit writes its output as a sum of pieces. Each piece has low rank across <em>some</em> split, but the split changes from piece to piece. One rank argument controls one split.</li>
+</ul>
+
+<p>Both new proofs attack this obstacle with one idea: turn rank into <em>length in a geometric space</em>. A length argument can handle all splits at one time. The details follow in Parts B and C. First, the toolbox.</p>
+
+<h3 id="a6">A6. The shared toolbox</h3>
+
+<h4>Tensors and wires</h4>
+<p>A matrix is an array with two indices. A <b>tensor</b> is an array with any number of indices. Each index belongs to a <b>party</b> (Anthropic's word) or a <b>terminal</b> (OpenAI's word). Think of the parties as people, each holding one index.</p>
+<p>A <b>wire</b> between parties $u$ and $v$ is the simplest tensor that connects them: it is 1 when the index of $u$ equals the index of $v$, and 0 otherwise. If the index takes $q$ values, the wire has <b>dimension</b> $q$ and carries $\log_2 q$ bits. Anthropic writes it $\langle q\rangle_{uv}$. OpenAI calls $b$ parallel one-bit wires a <b>cable of width $b$</b>.</p>
+
+<h4>Rank across a cut</h4>
+<p>Split the parties into two sides. Read the tensor as a matrix: rows are the joint indices of side 1, columns are the joint indices of side 2. Its rank is the <b>rank across the cut</b>. A wire of dimension $q$ that crosses the cut contributes a factor $q$ to this rank. Rank $r$ means the two sides need to share only $\log_2 r$ bits.</p>
+
+<h4>State sums: polynomials made only of wires</h4>
+<p>Take a graph. Put a string of bits on each edge. Give each vertex a table of variables, one variable for each setting of the strings on its edges. Multiply one variable per vertex, the one that the edge strings select, and add over all settings of all strings. Physicists call this a <b>state sum</b> or <b>partition function</b>. The coefficients of this polynomial form a tensor that is exactly a product of wires, one wire per edge. Anthropic's small example with 3 vertices and 1 bit per edge:</p>
+$$f_{3,1}=\sum_{p,q,r\in\{0,1\}} x_{1,pq}\;x_{2,pr}\;x_{3,qr}.$$
+<p>This is the formula for multiplying two $2\times 2$ matrices, with other names for the variables. Both proofs use a state sum as the hard polynomial for their "geometry" case.</p>
+
+<h4>Balanced decomposition of a circuit</h4>
+<p>Suppose the variables come in $k$ blocks and the polynomial is linear in each block. Call a set $S$ of blocks <b>balanced</b> if it has between $k/3$ and $2k/3$ blocks. A known technique (from depth reduction: Hyafil; Valiant, Skyum, Berkowitz, Rackoff) walks down the circuit from the output, at each product going to the larger factor, until it reaches a gate that involves a balanced set of blocks. The result: a circuit with $L$ gates writes the polynomial as a sum of pieces, one per balanced set $S$, and the piece for $S$ has rank at most $L$ across the cut "$S$ against the rest". Both proofs use this.</p>
+
+<h4>Border complexity: circuits that only work in a limit</h4>
+<p>A circuit can use constants such as $1/\varepsilon$ and compute $f+\varepsilon g$. As $\varepsilon\to 0$ the output tends to $f$, but the constants grow without limit, so no single circuit of that size needs to compute $f$. The smallest size of such an approximating circuit is the <b>border complexity</b>. The class of families with polynomial border complexity is the <b>closure of VP</b>, written $\overline{\mathrm{VP}}$. A lower bound for border complexity is stronger than one for exact circuits. Geometric complexity theory (Mulmuley and Sohoni) studies this version. Both papers prove border bounds on paper.</p>
+
+<h4>Diagonalization</h4>
+<p>This is the oldest method for separations. Build a program $P$ that, given a program $x$, simulates "$x$ run on $x$" and then does something different. Run $P$ on itself: a contradiction appears if the simulation was too cheap. The time hierarchy theorem ("more time solves more problems") is proved this way. Diagonalization needs the thing you fight against to be <em>shorter</em> than the time you have. A circuit for each input size is a large, arbitrary piece of advice, so plain diagonalization fails against circuits. Both proofs find a way around this in their second case.</p>
+
+<h2 id="partb">Part B. The Anthropic proof</h2>
+<p class="src">Source: <em>VP ≠ VNP over every field</em>, by Claude (Anthropic), 70 pages; repository <code>anthropics/formal-math</code>, folder <code>vp-vnp</code>, commit time 2026-11-23T20:04:44Z. Names in <code>typewriter</code> are the paper's Lean theorem names.</p>
+
+<h3 id="b0">B0. What is proved</h3>
+
+<div class="thm"><b>Theorem 1.1 (main theorem; <code>thm_allfields</code>).</b> There is an absolute constant $c\gt 0$ such that for each characteristic $p$ (zero or a prime) there is $m_0$ with this property. Over each field of characteristic $p$ and for each $m\ge m_0$, each circuit for $\operatorname{HC}_m$, and each circuit for $\operatorname{PERM}_m$ if $p\neq 2$, has more than
+$$m^{\,c(\log m)^{1/3}}=2^{\,c(\log m)^{4/3}}\ \text{gates}.$$
+Here $\log$ is the logarithm to base 2.</div>
+
+<ul>
+<li><b>Corollary 1.2.</b> Over each field, VP is a proper subset of VNP.</li>
+<li><b>Theorem 1.4.</b> The same bound holds for circuits that only <em>approximate</em> the polynomial (border complexity, A6). So VNP is not inside the closure of VP.</li>
+<li>The bound is <b>quasipolynomial</b>: larger than each $m^C$, much smaller than $2^m$. The best known circuits have size of the form $2^{O(m)}$. The paper says: "there is still plenty of room to tighten the bounds." It does not claim that the exponent $1/3$ is optimal.</li>
+<li>The threshold $m_0$ has no computed value. B6 explains why.</li>
+</ul>
+
+<h3 id="b1">B1. Map of the proof</h3>
+
+<p>The proof never studies the permanent directly. It has a common part and then two cases.</p>
+<ol>
+<li><b>Common part.</b> Measure tensors with functions named spectral points. They turn a network of wires into a <em>length</em>, and a rank into a <em>distance</em>. The distances that can occur always have nonpositive curvature.</li>
+<li><b>A dichotomy.</b> For each field, at least one of two hypotheses holds: the <b>flat</b> hypothesis (Euclidean distances are available) or the <b>contracting</b> hypothesis (distances are strictly shorter than Euclidean in a specific test).</li>
+<li><b>Flat case.</b> A direct geometric argument on a state sum on the complete graph. Bound: $2^{c(\log m)^{4/3}}$.</li>
+<li><b>Contracting case.</b> An indirect argument. A small circuit for the permanent would make each long computation faster. A diagonal argument shows that this is impossible. Bound: $2^{c(\log m)^2/\log\log m}$, which is larger.</li>
+</ol>
+<p>The permanent enters one time in each case, through an explicit form of Valiant's completeness theorem: each of the two hard polynomials is a "clause sum" (a sum over bit vectors of products of local weights), and a circuit for the permanent gives a circuit of about the same size for each clause sum. The paper marks these two steps <b>P</b>. Two other steps look inside the circuit, at the polynomial of each gate. The paper marks them <b>C</b>. Keep these four steps in mind; B10 uses them.</p>
+
+<h3 id="b2">B2. Step 1: measure tensors with spectral points; get distances</h3>
+
+<div class="def"><b>Definition 2.1, first part.</b> Fix a finite set $V$ of parties. For tensors on $V$:
+<ul>
+<li>The <b>product</b> $st$ is the tensor product taken party by party. Each party's index becomes a pair.</li>
+<li>$s$ is a <b>restriction</b> of $t$ if you get $s$ from $t$ by applying one linear map at each party. Think: each party processes its own index locally. $s$ is "no more powerful" than $t$.</li>
+<li>A <b>spectral point</b> is a function $\varphi$ from tensors to $[0,\infty)$ with three properties: $\varphi(1)=1$ for the trivial tensor; $\varphi(st)=\varphi(s)\varphi(t)$; and $\varphi(s)\le\sum_j\varphi(t_j)$ whenever $s=\sum_j s_j$ and each $s_j$ is a restriction of $t_j$.</li>
+</ul></div>
+
+<p>The idea comes from Strassen's "asymptotic spectrum" of tensors. A spectral point is a consistent way to assign a <em>size</em> to each tensor: sizes multiply under products, and do not grow under local processing or exceed the sum of the parts. One explicit example is the rank across a fixed cut (A6).</p>
+
+<p>Now apply $\varphi$ to a wire. The paper proves (<code>lem_exponents</code>) that there is a number $d_\varphi(u,v)$ between 0 and 1 with</p>
+$$\varphi\big(\langle q\rangle_{uv}\big)=q^{\,d_\varphi(u,v)}\quad\text{for each } q\ge 1,$$
+<p>and that $d_\varphi$ behaves like a distance (it is a pseudometric: symmetric, and the triangle inequality holds). Take logarithms. For a product $t$ of wires $\langle q_e\rangle_{u_ev_e}$:</p>
+$$\log\varphi(t)=\sum_{e} d_\varphi(u_e,v_e)\,\log q_e .$$
+<p>Each wire costs (number of bits) × (distance between its ends). The paper calls this sum the <b>length</b> of the network. A <b>price</b> is a limit of scaled distances $c\,d_\varphi$ with $c\ge0$.</p>
+
+<div class="aha"><b>AHA 1. A way to measure tensors is a way to place the parties in a space.</b> Each spectral point gives a metric on the parties. A network of wires then has a physical length: bits times distance. The algebra question "how large is this tensor?" becomes the geometry question "how long is this wiring?".</div>
+
+<p>A limit that the paper states: products of wires are the <em>only</em> tensors whose value can be read from the metric. The spectral points used are not explicit. They exist by Zorn's lemma (<code>prop_gauge</code>), a non-constructive axiom of set theory. For the tensor of the permanent there is no formula for $\varphi$. "This is why the argument works with polynomials whose tensors are products of wires."</p>
+
+<h3 id="b3">B3. Step 2: low rank means "routes through two hubs"</h3>
+
+<p>Let a tensor $t$ have rank at most $r$ across a cut of its parties into sides $I_1$ and $I_2$. Then $t$ is a restriction of this network: add two new parties, the <b>hubs</b> $o_1$ and $o_2$. Wire each party of $I_1$ to $o_1$ and each party of $I_2$ to $o_2$ with its full index. Join $o_1$ and $o_2$ by one wire of dimension $r$. All information crosses the cut through that one bridge.</p>
+
+<figure>
+<svg viewBox="0 0 560 190" width="100%" style="max-width:560px" role="img" aria-label="A tensor of rank r across a cut is a restriction of a network with two hubs joined by a bridge of dimension r">
+  <line x1="280" y1="12" x2="280" y2="178" stroke="#64748b" stroke-dasharray="5 5"/>
+  <g stroke="#2dd4bf" stroke-width="1.6">
+    <line x1="60" y1="40" x2="190" y2="95"/><line x1="50" y1="95" x2="190" y2="95"/><line x1="60" y1="150" x2="190" y2="95"/>
+    <line x1="500" y1="40" x2="370" y2="95"/><line x1="510" y1="95" x2="370" y2="95"/><line x1="500" y1="150" x2="370" y2="95"/>
+  </g>
+  <line x1="190" y1="95" x2="370" y2="95" stroke="#fb923c" stroke-width="3"/>
+  <g fill="#e2e8f0"><circle cx="60" cy="40" r="6"/><circle cx="50" cy="95" r="6"/><circle cx="60" cy="150" r="6"/>
+     <circle cx="500" cy="40" r="6"/><circle cx="510" cy="95" r="6"/><circle cx="500" cy="150" r="6"/></g>
+  <g fill="#fb923c"><circle cx="190" cy="95" r="8"/><circle cx="370" cy="95" r="8"/></g>
+  <text x="172" y="122" font-size="13">hub o₁</text><text x="352" y="122" font-size="13">hub o₂</text>
+  <text x="236" y="84" font-size="13">bridge: log r bits</text>
+  <text x="20" y="182" font-size="12">parties of side I₁</text><text x="440" y="182" font-size="12">parties of side I₂</text>
+  <text x="286" y="24" font-size="12">cut</text>
+</svg>
+<figcaption>Schematic, not to scale. A tensor of rank at most r across the cut is a restriction of this network. Only the orange bridge depends on the rank.</figcaption>
+</figure>
+
+<p>Apply a spectral point to both sides. The value does not grow under restriction, so (<code>lem_hubs</code>):</p>
+$$\log\varphi(t)\;\le\;\sum_{p\in I_1}d_\varphi(p,o_1)\log n_p+\sum_{p\in I_2}d_\varphi(p,o_2)\log n_p+d_\varphi(o_1,o_2)\,\log r. \tag{2.3}$$
+<p>Here $n_p$ is the number of values of the index of party $p$. The rank appears only in the last term.</p>
+
+<div class="aha"><b>AHA 2. Ranks become distances.</b> "Rank at most $r$" becomes "you can reroute all traffic through two hubs joined by a bridge of $\log r$ bits". If the hubs can be placed close together, a small rank makes the tensor cheap.</div>
+
+<h3 id="b4">B4. Step 3: a circuit gives low rank across balanced cuts</h3>
+
+<p>Let $f$ be linear in each of $k$ blocks of variables. Its coefficients form a tensor with one party per block. By the balanced decomposition (A6; <code>lem_balanced</code>), a circuit with $L$ gates gives</p>
+$$f=\sum_{S\ \text{balanced}} f_S,\qquad \text{rank of } f_S \text{ across } S \text{ at most } L .$$
+<p>There are at most $2^k$ balanced sets, so $\varphi(f)\le 2^k\max_S\varphi(f_S)$. Give each balanced set its own pair of hubs $o_S,o'_S$ and use (2.3) with $r=L$. If $f$ is itself a product of wires, the left side is exactly its length. So for some balanced set $S$:</p>
+$$\text{length of } f\;\le\;k\;+\;\text{length of the wires to the hubs of } S\;+\;d_\varphi(o_S,o'_S)\,\log L. \tag{2.4}$$
+
+<div class="aha"><b>AHA 3. One inequality handles all the varying cuts.</b> The $2^k$ different cuts cost only an additive $k$ (the bits that name the cut). One spectral point serves all balanced sets at the same time. This is the answer to the "varying cuts" obstacle of A5. Inequality (2.4) says: $\log L$ must be large if the network is long, the detours to the hubs are short, and the two hubs are close.</div>
+
+<p>Now the proof needs a polynomial that (a) is a product of wires, (b) has such hubs, and (c) the permanent can express. Point (b) depends on which metrics exist. That is a geometry question.</p>
+
+<h3 id="b5">B5. Step 4: two crossing wires force nonpositive curvature</h3>
+
+<p>Take four parties $a,b,c,d$ and two wires that cross: one from $a$ to $c$, one from $b$ to $d$. This product has full rank across the cut $ab\,|\,cd$ and across the cut $ad\,|\,bc$, so (2.3) gives nothing directly.</p>
+
+<p>The <b>crossing identity</b> (Proposition B.2, <code>prop_identity</code>) is an identity between integer tensors. It writes the two crossing wires as a sum of tensors $\Psi_0,\dots,\Psi_\Theta$. Each $\Psi_N$ has a trade-off: its rank across one cut is at most $(N+1)P(N)$ and its rank across the other cut is at most $(N'+1)P(N')$ with $N+N'=\Theta$. When one is large, the other is small. The index sets are built from "Frobenius symbols", which are the objects that count the partitions of an integer, and $P(E)$ counts symbols of energy at most $E$. Lemma B.1 shows $\ln P(E)\le\kappa\sqrt{E}$.</p>
+
+<p>Apply (2.3) to the largest term, one time for each cut. The result is the <b>crossing inequality</b> (Proposition B.3): the two crossing wires cost at most a routing through hubs $o,o'$ plus a bridge of weight $r$, and also at most a routing through hubs $w,w'$ plus a bridge of weight $r'$, where</p>
+$$r^2+r'^2\le 2(p^2+q^2)$$
+<p>and $p,q$ are the sizes of the two wires.</p>
+
+<div class="mine"><b>My reading.</b> The square root in $\ln P(E)\le\kappa\sqrt E$ is where the squares come from. The two ranks have logarithms of order $\sqrt{N}$ and $\sqrt{\Theta-N}$, so their squares add up to a constant. A relation "squares add up" is the form of the theorem of Pythagoras. This is the point where Euclidean-type geometry enters a problem about circuits.</div>
+
+<p>Average the crossing inequality over fine chains of points. The result (Theorem C.1, <code>thm_cn</code>) is the inequality of Bruhat and Tits: for points $x,x',z$ and each midpoint $y$ of $x$ and $x'$,</p>
+$$|zy|^2\;\le\;\tfrac12|zx|^2+\tfrac12|zx'|^2-\tfrac14|xx'|^2 ,$$
+<p>with equality in Euclidean space. Spaces that obey this are named <b>CAT(0)</b> spaces, or spaces of <b>nonpositive curvature</b>. Picture: in a flat plane the median of a triangle has a fixed length given by the sides. In a CAT(0) space the median is at most that long; triangles are "thinner". A tree and a saddle surface are examples. A sphere is not.</p>
+
+<div class="aha"><b>AHA 4. The possible "prices" are not arbitrary metrics. They all have nonpositive curvature.</b> An algebraic identity about two crossing wires forces a geometric law on each metric that a spectral point can produce. Each price comes from a map into a complete CAT(0) space (<code>prop_space</code>).</div>
+
+<h3 id="b6">B6. Step 5: the two cases</h3>
+
+<p>Within nonpositive curvature, a space is either flat somewhere (it contains Euclidean pieces) or it is strictly "thinner" than Euclidean. The paper makes this exact with a test set: the parties are the $\mu\times\mu$ matrices over the two-element field $\mathbb F_2$. These matrices are only labels with an addition. The field $\mathbb F_2$ here is not the field of the circuit.</p>
+
+<p>For a price on this set, let $D(r)$ be the root-mean-square distance between two matrices whose difference has rank $r$. Take $W,W'$ with ranks that add. The points $a$, $a+W$, $a+W+W'$, $a+W'$ form a quadrilateral with two sides $W$, two sides $W'$, and, because $2=0$ in $\mathbb F_2$, both diagonals equal to $W+W'$. In nonpositive curvature the squared diagonals of a quadrilateral add up to at most the squared sides, with equality for a Euclidean rectangle. So each price has $D(\mu)\le\sqrt{\mu}\,D(1)$.</p>
+
+<div class="def"><b>Definition 2.1, second part (the two hypotheses on the field $\mathbb k$).</b>
+<ul>
+<li><b>Flat hypothesis.</b> Each finite subset of each Euclidean space, with its usual distances, is a price.</li>
+<li><b>Contracting hypothesis.</b> There are an integer $\mu\ge2$ and a real $s$ with $1\le s$ and $s^2\lt\mu$ such that $D(\mu)\le s\,D(1)$ for each price on $\operatorname{Mat}_\mu(\mathbb F_2)$. In words: for some $\mu$, the bound $\sqrt\mu$ improves by a fixed factor for <em>all</em> prices.</li>
+</ul></div>
+
+<div class="thm"><b>Theorem 2.2 (<code>thm_alt</code>).</b> Over each field at least one of the two hypotheses holds.</div>
+
+<p><b>Why.</b> Suppose the contracting hypothesis fails. Then for each $\mu$ there are prices that come as close as you want to $D(\mu)=\sqrt\mu\,D(1)$. A compactness argument gives a price with exact equality. Equality in the quadrilateral inequality means the quadrilaterals are flat rectangles, and a standard CAT(0) fact (the flat rectangle property, <code>lem_toolkit_f</code>) then puts a solid cube of $\mathbb R^\mu$ inside a price. So each finite subset of Euclidean space is a price: the flat hypothesis.</p>
+
+<div class="aha"><b>AHA 5. Win-win.</b> The proof does not need to know which case is true. If geometry is flat, geometry proves the bound. If geometry is not flat, the shortfall is a resource for a different proof. The paper says: "We do not know which of the two hypotheses holds, even over $\mathbb R$, nor do we show that the two are mutually exclusive." This is also why $m_0$ has no value: the contracting case depends on $\mu$, "for which the proof gives no value".</div>
+
+<h3 id="b7">B7. The flat case, with numbers</h3>
+
+<h4>The polynomial</h4>
+<p>Take the complete graph on $k$ nodes with a string of $\ell$ bits on each edge. Its state sum (A6) is</p>
+$$f_{k,\ell}=\sum_{\sigma}\prod_{a=1}^{k}x_{a,\sigma_a}, \tag{2.1}$$
+<p>where $\sigma$ assigns a string $\sigma_{ab}\in\{0,1\}^\ell$ to each edge, and $\sigma_a$ is the list of the $k-1$ strings on the edges at node $a$. The sum has $2^{\ell k(k-1)/2}$ terms. Its tensor is a product of wires of dimension $2^\ell$, one per edge. Each wire joins the two <b>ends</b> $(a,b)$ and $(b,a)$ of its edge.</p>
+<ul>
+<li><b>Many wires cross each balanced cut.</b> A balanced set $S$ is crossed by $|S|(k-|S|)\ge 2k^2/9$ of the $k(k-1)/2$ wires. Compare a path graph, where one wire crosses a balanced cut. A path is the network of an iterated matrix product, which is easy.</li>
+<li><b>The permanent expresses it</b> (step P). A circuit with $L'$ gates for $\operatorname{PERM}_m$, with $m\ge 3k^3\ell\,2^{k\ell}$, gives a circuit with $L=5L'$ gates for $f_{k,\ell}$ (<code>lem_fkl_perm</code>). So $\log m$ is about $k\ell$.</li>
+</ul>
+
+<h4>The layout and the saving</h4>
+<p>By the flat hypothesis, place the ends in $\mathbb R^k$. For $a\lt b$ put the end $(a,b)$ at $\tfrac12 e_a$ and the end $(b,a)$ at $-\tfrac12 e_a$, where $e_a$ is the $a$-th unit vector. Each wire has length 1. Total length: $k(k-1)/2$.</p>
+<p>Now route through the hubs of a balanced set $S$. Each end at a node of $S$ goes to hub $o_S$; each other end goes to $o'_S$.</p>
+<ul>
+<li><b>Hubs at the origin.</b> Each end is at distance $\tfrac12$ from the origin. The routing costs $k(k-1)\times\tfrac12$, the same as the wires, so this routing gains nothing.</li>
+<li><b>Shift the hubs.</b> The positions of the ends on the $S$ side add up to a vector of length at least $k^{3/2}/9$, because at least $2k^2/9$ wires cross. Move $o_S$ a small distance $\eta$ (of order $k^{-1/2}$) in the direction of that vector, and $o'_S$ the same distance in the opposite direction. Most $S$-side ends are now nearer to their hub. The total routing is shorter than the wires by a fixed fraction of $k$. The two hubs are only $2\eta$ apart.</li>
+</ul>
+
+<div class="def"><b>Worked check (mine, script <code>hub_shift_check.py</code>).</b> The script places the ends as above, tries each balanced set $S$, and scans $\eta=t/\sqrt k$ for six values of $t$ (my choice; the paper fixes its own constant). It reports the smallest saving over all balanced sets, at the best $t$ ($t=0.25$ in each case).
+<table>
+<tr><th>$k$</th><th>wire length</th><th>smallest sum vector</th><th>paper's bound $k^{3/2}/9$</th><th>smallest saving</th><th>saving / $k$</th><th>distance between hubs</th></tr>
+<tr><td>6</td><td>15</td><td>1.871</td><td>1.633</td><td>0.515</td><td>0.086</td><td>0.204</td></tr>
+<tr><td>9</td><td>36</td><td>3.391</td><td>3.000</td><td>0.698</td><td>0.078</td><td>0.167</td></tr>
+<tr><td>12</td><td>66</td><td>5.196</td><td>4.619</td><td>0.882</td><td>0.074</td><td>0.144</td></tr>
+</table>
+The saving is positive and the ratio saving/$k$ stays between 0.074 and 0.086 for these three sizes. Three small sizes agree with "a fixed fraction of $k$" but do not prove it; the proof is Proposition E.5 in the paper.</div>
+
+<p>Put this into (2.4). In Euclidean units the inequality becomes</p>
+$$\ell\cdot\text{saving}\;\le\;c\,k+2\eta\,\log L$$
+<p>up to errors that go to zero. Left side: the network is $\ell\cdot$saving bits×distance longer than the routing. Right side: the cost of naming the cut, plus the bridge. If $\ell$ is large, the left side is large, so $\log L$ must be large. With saving of order $k$ and $\eta$ of order $k^{-1/2}$ this gives $\log L$ of order $\ell k^{3/2}$.</p>
+
+<div class="aha"><b>AHA 6. Displace the hub toward the traffic.</b> With the hub at the centre, rerouting is a tie. A highly connected graph has an imbalance on each balanced cut: the ends on one side pull in a common direction. A small shift of the hub in that direction saves a fixed fraction of length. The network cannot be made shorter than itself, so the bridge must pay: $\log L$ is large.</div>
+
+<h4>The exponent 4/3</h4>
+<p>For growing $k$ the cost term $ck$ is not negligible. The paper replaces it by about $k^{3/2}$ (<code>lem_few</code>, <code>prop_cube</code>) and proves (<code>prop_flat_rate</code>):</p>
+$$\log L\ \ge\ \ell k^{3/2}/16\quad\text{for }\ell\ge100\sqrt k .$$
+<p>Choose $k=r^2$ and $\ell=100r$. Then $\log m\approx k\ell$ is of order $r^3$, and $\log L$ is of order $r\cdot r^3=r^4=(\log m)^{4/3}$. Theorem E.11 gives the explicit flat-case bound: more than $2^{(\log m)^{4/3}/1600^2}$ gates.</p>
+<p>The paper names what limits this case: the $k$ bits that name a balanced set, and the cost of the set of all ends, bounded by about $\sqrt k$ in scaled units. "We do not know whether the bound in the flat case can be improved."</p>
+
+<h3 id="b8">B8. The contracting case: accelerators cannot exist</h3>
+
+<p>Here geometry does not give the bound directly. The paper uses the contraction to prove a statement about <em>computations</em>, and then diagonalizes. Steps 1 to 4 use no circuit and no permanent.</p>
+
+<h4>Steps 1 to 3: from contraction to tree networks</h4>
+<ol>
+<li><b>A Poincaré inequality</b> (<code>thm_poincare</code>). The contracting hypothesis spreads to a family of larger test sets: the groups $U_h$ of upper triangular $h\times h$ matrices over $\mathbb F_2$ with ones on the diagonal. For each price on $U_h$: the mean squared distance between two random elements is at most a constant times the sum, over the $h-1$ elementary generators, of the mean squared distance that a generator moves a point. The constant is the same for all $h$ that are multiples of a fixed integer. In words: far apart costs about the same as a few short steps.</li>
+<li><b>Strassen duality turns inequalities into identities</b> (<code>thm_duality</code>, then <code>thm_laws</code>). Theorem A.6: if <em>no</em> spectral point detects that a tensor $C$ is larger than tensors $A_1,\dots,A_r$, then for each $\varepsilon\gt 0$ and large $N$, the power $C^N$ is covered by at most $2^{\varepsilon N}$ tensors, each a product of $N$ factors from the $A_\beta$. So an inequality between lengths that holds in <em>each</em> price becomes an actual way to rebuild a network from cheaper networks. Applied to the Poincaré inequality this gives the <b>rerouting laws</b>. Their coefficients lie in a finitely generated ring $A$. The paper notes that none of these identities is written explicitly.</li>
+<li><b>Each network is a sum of tree networks</b> (<code>thm_tree</code>). The laws rewrite the value of each network of tensors as a sum of values of networks shaped like trees. A tree can be cut into subtrees joined by wires of small total size.</li>
+</ol>
+
+<div class="aha"><b>AHA 7. If geometry is strictly contracting, wiring can be compressed.</b> A geometric inequality that holds for <em>all</em> prices is, by duality, an algebraic identity. "Shorter than Euclidean" becomes "there is a real rerouting that uses fewer bits".</div>
+
+<h4>Step 4: each computation can be cut</h4>
+<p>The computation model: a nondeterministic program whose runs have weights in the ring $A$. An <b>instance</b> $z$ is a program with an argument, and $\operatorname{sum}(z)$ is the sum of the weights of its accepting runs. A fixed universal machine (a "tape automaton") evaluates $\operatorname{sum}(z)$, and its runs form a network of tensors. So Step 3 applies to computations.</p>
+<p>The <b>cutting theorem</b> (<code>thm_cut</code>, Theorem J.4): fix a large integer $v$, the <b>scale</b>, and a constant $H$ (a multiple of 16, at least 272). For a computation of $\tau\ge v^H$ steps on an instance of size at most $\tau/v^{48}$, the value $\operatorname{sum}(z)$ equals a sum over the runs of a <em>cutting program</em>. Each of its accepting runs takes at most $\tau/v^{24}$ steps and lists at most $\tau v^2/v^H$ <b>pieces</b>. Each piece is a short instance (size at most $v^{H-32}$) that runs at most $v^H$ steps. The value is the weight of the run times the product of $\operatorname{sum}(y)$ over the listed pieces $y$.</p>
+<p>In words: a long computation is a cheap combination of many short computations.</p>
+
+<h4>Step 5: accelerators</h4>
+<p>Only now suppose that $\operatorname{PERM}_m$ has a circuit with $v^a$ gates, with $m$ a large power of $v$.</p>
+<ul>
+<li><b>The polynomial</b> (step P). $\Phi=\sum_w U_t(w)\,y^w$, where $w$ runs over the words of fewer than $n$ symbols, $U_t(w)$ is the value of the universal automaton on $w$ in $t$ steps, and $y^w$ is a product of variables that spells $w$. Take $n=v^{H-32}+1$ and $t=v^{H+1}$. $\Phi$ is a clause sum, so the circuit for the permanent gives a circuit with $O(v^a)$ gates for $\Phi$. The degree of $\Phi$ is at most $n$: about the <em>length of the input</em>, not the number of steps.</li>
+<li><b>The evaluation lemma</b> (step C; <code>lem_lowdeg</code>, Lemma K.2). Given a circuit with $L$ gates, a nondeterministic program evaluates the part of degree at most $d$ of its output, at a 0/1 point that encodes a word, in about $(d+|z|+1)(\log(L+n+d))^{O(1)}$ steps. This is far fewer than $L$. How: the value is a sum over <em>parse trees</em> with at most $d$ leaves, one run per parse tree. A run does not compute with the constants of the circuit. It only records their <b>names</b>.</li>
+<li><b>Result: an accelerator</b> (<code>def_acc</code>, <code>lem_circuit</code>). A program whose value on each short instance $z$ that runs at most $v^H$ steps is $\operatorname{sum}(z)$, and whose accepting runs take at most $v^{H-16}$ steps. It evaluates a sum over $v^H$ steps in $v^{H-16}$ steps.</li>
+</ul>
+
+<div class="aha"><b>AHA 8. Cost follows degree, not circuit size.</b> A run follows one parse tree, so it pays for the degree (about the input length) and not for the size of the circuit. The circuit can be much larger than the running time and still be used. The constants are never multiplied; they are named and collected in a "tally". That keeps the argument valid for arbitrary field constants.</div>
+
+<h4>The diagonal argument</h4>
+<p>Problem: at scale $v$ the accelerator's advice (the circuit, $v^a$ constants) is longer than the running times, so diagonalization fails there (A6). The fix has three parts.</p>
+<ol>
+<li><b>Move to a larger scale</b> (<code>lem_postpone</code>, <code>prop_next</code>). The names of constants can be moved in front of the sum over runs: the value is a combination $\sum_e\lambda_e\operatorname{sum}(z_e)$ of plain instances. Cut each $z_e$ with the cutting theorem and run the accelerator on each piece. That turns $\tau$ steps into fewer than $\tau/v^8$. Repeat, and get an accelerator with the <em>same constants</em> at scale $v^\alpha$. At that scale the same advice is short.</li>
+<li><b>Reduce to a finite field.</b> Correctness of an accelerator is a family of polynomial identities in its constants. So it survives when you reduce the constants into a finite field $E$. In a finite field, a bounded number of names covers all powers of the constants.</li>
+<li><b>Diagonalize.</b> Let $\mathsf P$ be the program that on input $x$ guesses one bit. For one value it accepts with weight 1. For the other it applies the accelerator to "$x$ applied to $x$". Run $\mathsf P$ on itself. Its value $V$ satisfies
+$$V=1+V,$$
+which is impossible in a nonzero ring (<code>thm_noacc</code>).</li>
+</ol>
+
+<div class="aha"><b>AHA 9. Rescale until the advice is short.</b> A circuit is too long to diagonalize against at its own scale. The cutting theorem lets the same device speed up much longer computations, piece by piece. At the larger scale the advice is short compared to the running time, and the old diagonal trick works. The paper remarks that the assumed speed-up "is used at one scale only".</div>
+
+<p><b>The bound.</b> Each of the $O(\alpha)$ successive cuts costs a power of $\log v$. This gives the condition $(\log v)^{O(a)}\le v$, so $a$ can be as large as about $\log v/\log\log v$. A circuit with $v^a$ gates is excluded, and with $m$ a power of $v$ this is Theorem K.7: more than $2^{c(\log m)^2/\log\log m}$ gates.</p>
+
+<p><b>Assembly (Theorem L.1).</b> One of the two cases holds. The flat case gives $2^{c''(\log m)^{4/3}}$. The contracting case gives the larger $2^{c'(\log m)^2/\log\log m}$. The theorem states the smaller one.</p>
+
+<h3 id="b9">B9. All fields, Hamiltonian cycle, approximation</h3>
+<ul>
+<li><b>From $\mathbb R$ to each field (Appendix M).</b> Lemma M.1: if a polynomial with integer coefficients has a circuit with $L$ gates over some field of characteristic $p$, it has one with $L$ gates over the algebraic closure of the prime field. So one field per characteristic is enough, and the constant $c$ is absolute while $m_0$ depends on $p$.</li>
+<li><b>Hamiltonian cycle (Proposition M.2).</b> The reduction of clause sums to the permanent uses matrix entries $\pm\tfrac12$, so it needs $2\neq0$. The reduction to $\operatorname{HC}_M$ (for $M\ge40|I|$, with entries 0, 1 and single weights) uses no division, so it works over each field. The paper proves its own explicit reductions (Propositions E.1 and M.2) in place of citing Valiant's theorem.</li>
+<li><b>Approximating circuits (Appendix N).</b> A circuit over the Laurent series field $\mathbb k((\varepsilon))$ <em>approximates</em> $f$ if it computes $f+\varepsilon g$ where the coefficients of $g$ are power series in $\varepsilon$. Lemma N.2 cuts the constants down to Laurent polynomials. Both cases then go through, with "approximate accelerators" in the contracting case.</li>
+</ul>
+
+<h3 id="b10">B10. Why the proof fails for the determinant and for Boolean circuits</h3>
+<p>A lower-bound proof for the permanent must fail for the determinant, which is easy. The paper checks this (Section 2.5).</p>
+<ul>
+<li><b>Determinant.</b> The proof fails at one point only: the reduction of clause sums to the permanent (the two steps P). No reduction of comparable size to determinants is known. The results imply that none exists for $f_{k,\ell}$ or $\Phi$.</li>
+<li><b>Boolean circuits.</b> The proof fails at the two steps C. A Boolean circuit computes some $g=\operatorname{HC}_m+\sum_i(x_i^2-x_i)h_i$ (A4). The decomposition lemma uses the part that is linear in each block. The evaluation lemma uses the part of low degree. For $g$ these parts need not relate to those of $\operatorname{HC}_m$. Also: "we know no way to run [a large Boolean circuit] faster than gate by gate."</li>
+</ul>
+
+<h3 id="b11">B11. The Lean formalization</h3>
+<ul>
+<li><b>Size.</b> 324 <code>.lean</code> files, 3,427,196 bytes (my count from the repository tree). Lean 4.33.1, Mathlib at commit <code>0df444a360e</code>.</li>
+<li><b>What a human must read.</b> <code>Statement.lean</code>, 98 lines, imports only Mathlib. It defines circuits (<code>Computes</code>), <code>perm</code>, <code>hc</code>, approximation, VP, VNP, the closure of VP, and four statements: <code>MainTheorem</code>, <code>MainTheoremApprox</code>, <code>Separation</code>, <code>SeparationClosure</code>. The paper prints this file in Section 3.</li>
+<li><b>Checks the repository states.</b> No <code>sorry</code> (unproved gap) outside <code>Challenge.lean</code>; no axioms other than the three standard ones (<code>propext</code>, <code>Classical.choice</code>, <code>Quot.sound</code>). The tool Comparator compares five theorems against <code>Challenge.lean</code> and re-checks the proofs with a second, independently written kernel named nanoda.</li>
+<li><b>Coverage.</b> Each numbered statement of the paper has a Lean theorem, except Remark N.6 (the consequence for determinantal complexity). Table 3 of the paper maps statements to Lean names. Appendix Q.3 lists the known differences between text and Lean on about three pages.</li>
+<li><b>A caveat the paper states.</b> The printed proofs of Proposition I.1, Theorem H.2(d),(e), Theorem J.3 and Proposition N.4 describe machines and programs. "That these do exactly what is claimed can be verified only in the Lean development." So "the contracting case, and with it every main result, rests on Lean at these points."</li>
+<li><b>A second caveat.</b> "Whether the statements say what is meant was judged only by AI readers."</li>
+</ul>
+
+<h3 id="b12">B12. All the AHA moments of the Anthropic proof</h3>
+<ol>
+<li>A way to measure tensors is a way to place parties in a space; wires get lengths (<a href="#b2">B2</a>).</li>
+<li>Low rank = route through two hubs with a narrow bridge (<a href="#b3">B3</a>).</li>
+<li>One spectral point handles all balanced cuts; the varying cuts cost only $k$ bits (<a href="#b4">B4</a>).</li>
+<li>Two crossing wires force nonpositive curvature on each price (<a href="#b5">B5</a>).</li>
+<li>Win-win dichotomy: flat or contracting; no need to know which (<a href="#b6">B6</a>).</li>
+<li>Shift the hub toward the traffic; the saving must be paid by $\log L$ (<a href="#b7">B7</a>).</li>
+<li>Contraction + duality = real rerouting identities; networks become trees; computations can be cut (<a href="#b8">B8</a>).</li>
+<li>Evaluate a low-degree part by parse trees: cost follows degree, constants are only named (<a href="#b8">B8</a>).</li>
+<li>Rescale until the circuit advice is short, reduce to a finite field, then $V=1+V$ (<a href="#b8">B8</a>).</li>
+<li>Sanity: the proof breaks for the determinant at exactly the steps P, and for Boolean circuits at exactly the steps C (<a href="#b10">B10</a>).</li>
+</ol>
+
+<h2 id="partc">Part C. The OpenAI proof</h2>
+<p class="src">Source: <em>VP and VNP are different</em>, by OpenAI, 23 November 2026 edition, 30 pages; repository <code>openai/math</code>, commit time 2026-11-24T01:20:59Z. The repository history says: "This result was obtained on November 6, 2026." I read the LaTeX source <code>build/Paper.tex</code>.</p>
+
+<h3 id="c0">C0. What is proved</h3>
+
+<div class="thm"><b>Theorem 1.1 (separation).</b> Over each field, border circuits for the family $f_n$ (defined in C1) need $\exp(\Omega((\log n)^{5/4}))$ gates. This holds even when only the degree-$n$ part is approximated.</div>
+
+<div class="thm"><b>Corollary 1.2.</b> The same lower bound, in terms of matrix order, holds for the directed Hamiltonian cycle polynomial and, except in characteristic two, for the permanent. It holds for determinantal complexity (the smallest size of a determinant of affine linear forms that equals the polynomial) and for its border version. For large $m$ and $m\le N\le\exp(c(\log m)^{5/4})$, the degree-$N$ padded $m\times m$ permanent in characteristic zero is not in the orbit closure of the determinant.</div>
+
+<ul>
+<li>The paper proves the border version from the start: "VNP is not contained even in border VP".</li>
+<li>Circuit model: free field constants; binary additions, subtractions and multiplications; formal polynomials; no condition on the degrees inside the circuit.</li>
+<li>The corollary uses the classical completeness theorems by citation (Valiant; Bürgisser). The proof is one paragraph.</li>
+<li>The paper states its limits: this is a separation "at the polynomial scale"; "Nor is this a separation for decision problems in the Boolean model."</li>
+</ul>
+
+<h3 id="c1">C1. The witness polynomial: a universal machine in the coefficients</h3>
+
+$$f_n(Z)=\sum_{x\in\{0,1\}^n} c_x\; Z_{1,x_1}Z_{2,x_2}\cdots Z_{n,x_n}.$$
+
+<p>There are $2n$ variables $Z_{i,0},Z_{i,1}$. Each bit string $x$ selects one monomial. The coefficient $c_x$ is a count: the number of accepting paths of a fixed universal machine that runs the program written in a self-delimiting prefix of $x$, with $x$ itself as input, for at most $n^{1000}$ bit steps per path.</p>
+
+<ul>
+<li><b>It is in VNP.</b> Use extra 0/1 variables for $x$, for the branch choices, and for a Cook–Levin tableau (the standard table that records a computation step by step). A product of local checks is an easy polynomial; the sum over the extra bits gives $f_n$.</li>
+<li><b>Each coefficient is a programmable processor.</b> The paper says: "Think of a coefficient of $f_n$ as a programmable processor." If you put program code into the bits $x$, the coefficient $c_x$ is the output count of that program. One family serves both cases of the proof.</li>
+</ul>
+
+<div class="aha"><b>AHA 1. Choose a witness that can run code.</b> The hard polynomial is not a fixed combinatorial object. Its coefficient table <em>is</em> a universal machine. So the polynomial can express a state sum on a graph (for case 1) and can run a program that argues against a circuit for the polynomial itself (for case 2).</div>
+
+<h3 id="c2">C2. The hinge: strict shortening</h3>
+
+<p>OpenAI starts with the geometry and does not derive it. A <b>bit tensor network</b> has arbitrary local tables at its nodes; joining two ports sums over a shared bit. Place the nodes in a metric space. A cable of width $b$ costs $b$ × (distance). Computation at one point is free.</p>
+
+<div class="def"><b>Definition 2.1 (strict shortening).</b> In dimension $D\ge2$, let $C_{D,m}$ be the tensor of width-$m$ cables on the $D$ coordinate diameters of the Euclidean unit ball. It has $2D$ terminals and tests equality across each diameter. Laid directly, it costs $2Dm$ (each diameter has length 2). A <b>strict shortening</b> is a finite sum identity for this tensor, over a field, that uses $A$ networks in the ball, each of cost at most $w$, with
+$$w+2D\log_2 A\;\lt\;2Dm .$$
+</div>
+
+<p>Read the inequality this way. You want to send $m$ bits along each of $D$ perpendicular diameters. Is there a fixed tensor identity that does it more cheaply than the straight wires? You can use a sum of $A$ alternatives. The term $2D\log_2A$ pays for a "selector" that tells each of the $2D$ terminals which alternative is in use (send it from the centre, distance 1 to each terminal).</p>
+
+<p>The paper's sentence for the whole proof: "if geometry fails to prove hardness directly, its failure powers a hierarchy theorem."</p>
+
+<div class="aha"><b>AHA 2. The dichotomy costs nothing.</b> Either a strict shortening exists (for some $D$, $m$, in the characteristic at hand) or none exists. This is true by logic, so the two cases need no theorem. All the work goes into what each case gives.</div>
+
+<h3 id="c3">C3. Case 1: wire cannot be saved</h3>
+
+<p>Suppose no strict shortening exists. The proof of this case is about one page.</p>
+
+<ol>
+<li><b>The graph.</b> Take a bounded-degree <b>expander</b> on $d\asymp a\sqrt{\log n}$ vertices: a sparse graph in which each balanced cut (each side at least $d/3$ vertices) is crossed by at least $\gamma d$ edges, with $\gamma\gt 0$ fixed. Put $m=\lfloor c\log n\rfloor$ bits on each edge.</li>
+<li><b>The polynomial.</b> $g$ is the state sum (A6) of this graph. Its coefficient tensor "consists simply of wires".</li>
+<li><b>$g$ comes from $f_n$.</b> $g$ is a projection of $f_n$: a program in a forced prefix of $x$ checks that the bits are consistent. There is room because the number of variables is at most $n^{1/2}$ when $c$ is small. If $f_n$ has border cost $s$, then $g$ has border cost $\operatorname{poly}(n+s)$.</li>
+<li><b>Balanced decomposition</b> (A6). The tensor of $g$ is in the closure of sums with one term per balanced cut, each of rank at most $2^{O(d)}\operatorname{poly}(n+s)$ across its cut.</li>
+<li><b>Hubs.</b> Place the graph tensor as $C_{D,m}$ with one diameter per edge, $D=O(d)$. For one term, stream all bits to two hubs, one per side, joined by a bridge of at most $h=C(d+\log(n+s))$ bits.</li>
+<li><b>Shift the hub.</b> With both hubs at the centre, the cost equals the direct cost. The unit position vectors of the terminals of the first hub add up to a vector of norm at least $\sqrt{\gamma d}$. Move that hub by $u=b/\sqrt d$ in that direction. With $\sqrt{1+x}\le1+x/2$ the change of cost is at most
+$$-\,m\,u\sqrt{\gamma d}\;+\;D\,m\,u^2\;+\;h\,u .$$</li>
+<li><b>Conclusion.</b> If $h\le m\sqrt{\gamma d}/2$, this saves a constant times $m$. The selection among the cuts costs at most $2Dd$, which is $O(d^2)=O(a^2\log n)$ and is smaller than the saving when $a$ is small. That would be a strict shortening, which does not exist. So $h\gt m\sqrt{\gamma d}/2$.</li>
+</ol>
+
+<p><b>The exponent 5/4.</b> $h$ is about $\log s$, $m$ is about $\log n$, and $\sqrt d$ is about $(\log n)^{1/4}$. So $\log s\gtrsim(\log n)\cdot(\log n)^{1/4}=(\log n)^{5/4}$.</p>
+
+<div class="aha"><b>AHA 3. The same hub shift as in the Anthropic proof (B7, AHA 6).</b> Reroute through two hubs, then displace a hub "in the direction of the resultant of the cut wires". The paper adds: "Even cuts chosen differently in different terms would work." That sentence is the answer to the varying-cuts obstacle of A5.</div>
+
+<h3 id="c4">C4. Case 2: the stretch theorem and its two lemmas</h3>
+
+<div class="thm"><b>Theorem 3.1 (stretch).</b> If a strict shortening exists in the characteristic under consideration, then the border cost of $f_n$ is more than $2^{n^{\sigma}}$ for some $\sigma\gt 0$ and all large $n$.</div>
+
+<p>The name: "a single fixed saving will boost the lower bound to stretched exponential". This bound is much larger than the one of case 1, so Theorem 1.1 states the weaker case-1 bound.</p>
+
+<h4>The plan in words</h4>
+<p>"Against a description of a circuit, compute this very coefficient, plus one." That is diagonalization (A6). Done naively it beats only a linear bound. The paper's fix: build one very large contraction (a tensor network) that contains very many programmed processors. In its live run, this network must <em>replay the whole network</em>, with the assumed small circuit put in place of each processor. Three economies make the replay fit:</p>
+<ul>
+<li><b>Batching.</b> One circuit serves all queries. "We compute by counting and may follow just one parse tree", so each query costs about the degree, not the circuit size.</li>
+<li><b>The replay is itself a contraction.</b> RAM transcripts are guessed and checked by sorting. So the replay is a network of wires.</li>
+<li><b>Shortening.</b> Because a strict shortening exists, the wires of that network can be shortened again and again until they fit the communication budget of the processors.</li>
+</ul>
+
+<h4>The formal skeleton</h4>
+<p>Let $Y(X)$ be the <b>universal parse map</b>: a polynomial map from circuit parameters $X=(X_1,\dots,X_h)$ to the coefficients of the degree-$n$ part of the output. It covers each circuit of size $M$. Let $c$ be the coefficient vector of $f_n$. Set $\sigma=\rho/2$, $M=2^{\lceil n^\sigma\rceil}$, $r=2^{\lceil n^\rho\rceil}$, $L=r^2$ for a small fixed $\rho\gt 0$.</p>
+
+<div class="thm"><b>Lemma 3.2 (replay), short form.</b> Given square matrices $W_\mu$ over a prime field, one per parameter monomial $X^\mu$ of degree at most $L$, whose entries can be computed by counting with $\operatorname{poly}(M)$ cost per path and $\operatorname{poly}(M)$ bits of advice. Mark one index $\ast$. Then there is a row vector $F$ of polynomials of degree at most $L/(2n)$ in the coefficient slots with
+$$F(c)=e_\ast+\sum_\mu\big([X^\mu]\,F(Y(X))\big)\,W_\mu ,$$
+where $e_\ast$ is the unit row vector and $[X^\mu]$ takes the coefficient of $X^\mu$.</div>
+
+<div class="thm"><b>Lemma 3.3 (boundary evaluation), short form.</b> Suppose $c$ is in the border image of the parse map. Then there are matrices $W_\mu$ as above and a nonzero column $\Omega$ over the prime field such that, for each polynomial $G$ of degree at most $L/(2n)$,
+$$\Big(\sum_\mu[X^\mu]\big(G(Y(X))\big)\,W_\mu\Big)\,\Omega=G(c)\,\Omega .$$</div>
+
+<p><b>Proof of the stretch theorem from the two lemmas (three lines in the paper).</b> Suppose a border circuit of size $M$ exists. Lemma 3.3 gives the $W_\mu$ and $\Omega$. Apply Lemma 3.2 with $\ast$ a position where $\Omega$ is nonzero. Multiply the replay equation on the right by $\Omega$ and use the boundary equation on each component of $F$:</p>
+$$F(c)\,\Omega=e_\ast\Omega+F(c)\,\Omega\quad\Longrightarrow\quad e_\ast\Omega=0 .$$
+<p>But $e_\ast\Omega$ is the entry of $\Omega$ at $\ast$, which is nonzero. Contradiction.</p>
+
+<div class="aha"><b>AHA 4. "$V=1+V$" in matrix form.</b> The replay lemma says: the true coefficients satisfy "value = 1 + (what a circuit would compute)". The boundary lemma says: if a circuit exists, even only in the limit, then "(what a circuit would compute) = value" along one fixed vector. Together: $0=1$ at a nonzero entry. Compare the Anthropic diagonal $V=1+V$ (B8).</div>
+
+<h3 id="c5">C5. The boundary lemma: reading a limit with residues</h3>
+
+<p>The problem: the circuit may exist only as a limit. Its constants $X$ can go to infinity while the outputs $Y(X)$ converge to $c$. "How can one learn, let alone distribute, a circuit using arbitrary constants, possibly only working in a limit?" The paper avoids the constants. If $c=Y(a)$ for a point $a$ in a small prime field, scalar weights $a^\mu$ would do. In the limit case the paper uses <em>matrix</em> weights $W_\mu$.</p>
+
+<ol>
+<li><b>A prime of modest size</b> (Lemma 4.1). If $c$ is in the closure of the image over the algebraic numbers, there is a prime $p$ of polynomial bit length such that the same holds over the algebraic closure of $\mathbb F_p$. Tools: degree bounds for varieties, Cramer's rule, Hadamard's inequality, the prime number theorem.</li>
+<li><b>Slice to a curve</b> (Proposition 4.2). Cut the set of parameters down to a curve with a parameter $t$, given by $h$ equations $g_i(X,t)=0$ of polynomial degree. At a "place" above $t=0$ each output $Y_\nu$ is regular and has value $c_\nu$. The parameters $X_j$ themselves "can have poles there". Each $g_i$ can be evaluated in polynomial bit time with polynomial advice.</li>
+<li><b>Residue pins</b> (Lemma 5.1). A computation path "sees only one monomial", and regularity at the place can come from cancellation between paths. The fix uses calculus in characteristic $p$. Let $A$ be a regular function on the curve with value $z\in\mathbb F_p$. Then $A^q-z=(A-z)^q$ vanishes to order at least $q$ for each power $q$ of $p$. For a test differential $\eta$ with poles of order less than $q$, the differentials $A^q\eta$ and $z\eta$ have equal residues. The <b>Cartier operator</b> $C_q$ satisfies $C_q(A^q\eta)=A\,C_q(\eta)$. This moves the power from the unknown function to a known operation on the test. A finite box of test differentials gives the vector $\Omega$ (traced residues) and the matrices $W_{a,\mu}$, with
+$$\Big(\sum_\mu W_{a_\mu,\mu}\Big)\Omega=z\,\Omega .$$</li>
+<li><b>Entries by counting.</b> Each matrix entry is a coefficient of a known polynomial. The paper extracts it by a sum over a cyclic group of a finite field (orthogonality), which a nondeterministic path can do by guessing one group element.</li>
+</ol>
+
+<div class="aha"><b>AHA 5. Make the limit an eigenvector law.</b> The proof never learns the circuit's constants. It replaces "plug in the constants" by "multiply by matrices whose entries a small program can count", and the unknown limit value shows up as an eigenvalue on one fixed vector $\Omega$. The paper: "Cartier operators in positive characteristic are key to this step, even if we began in characteristic zero."</div>
+
+<h3 id="c6">C6. The replay lemma: architecture</h3>
+
+<p>The rest of the paper (Sections 6 to 9) builds the row $F$. There are two executions of one network.</p>
+
+<div class="tw"><table>
+<tr><th></th><th>Live execution</th><th>Primed execution</th></tr>
+<tr><td>Table at each processor</td><td>the true coefficients $c_x$</td><td>the same coordinate of $Y(X)$ (the assumed circuit)</td></tr>
+<tr><td>What it gives</td><td>$F(c)$</td><td>$F(Y(X))$</td></tr>
+<tr><td>The bits $x$ are</td><td>program code that runs</td><td>"just data specifying slots"</td></tr>
+</table></div>
+
+<ul>
+<li><b>Teams.</b> The network has $R$ teams of $r$ processors. A processor has $n$ bit ports and table $c_x$. One team together can run a long nondeterministic random-access computation (RAM). Each two teams share a fixed bundle of <b>exterior</b> links.</li>
+<li><b>Two branches.</b> The live programs have an indicator branch that gives $e_\ast$, and a replay branch. The replay branch sums over the primed execution, using parse trees and inserting the matrix weights by the <em>total</em> parameters used.</li>
+<li><b>Batch algorithm.</b> For one primed team, a RAM of cost $\widetilde O(rn)$ guesses the interior wires, guesses one parse per slot, and counts. In RAM-transcript form this is again a network.</li>
+<li><b>Transcript compilation.</b> A RAM run becomes a bit network by guessing the memory contents at each probe and checking them by sorting (Batcher's bitonic sort), with $\widetilde O(B)$ bits per bucket.</li>
+</ul>
+
+<p>The difficulty: the replay creates <em>new</em> transcript wires, and their total width can be larger than all the ports the network started with. So the paper needs two scheduling theorems (C7 and C8).</p>
+
+<h3 id="c7">C7. Packing: the epoch lemma</h3>
+
+<p>One use of a strict shortening saves a fixed fraction $\nu$ of length at one crossing. The proof needs this saving to <em>iterate</em> on a large network. The paper builds a special host space for that.</p>
+
+<ul>
+<li><b>Windowed host.</b> With $q=2^D$: sites have a height in $(\mathbb Z/\ell)^q$ and, on each of $q$ cycles, a partial string of binary "lamps". All lamps are known except those in a window around the current height. At radius zero this looks like a cyclic butterfly network. The paper: "Increasing radius lets us perform local Euclidean geometry on heights and pay for it by a little folding in lamp space."</li>
+<li><b>Lemma 7.1 (epoch).</b> Combine $K_0$ placed networks. They can be replaced by a sum of networks at a slightly larger radius with
+$$W_{\text{out}}+\lambda Z_{\text{out}}\;\le\;K_0\Big(\tfrac12\max_i(W_i+\lambda Z_i)+O(V_a)\Big),$$
+where $W$ is the total charged length, $Z$ measures how concentrated the traffic is, and $V_a$ is the number of sites. The length per network halves in each epoch.</li>
+<li><b>How.</b> Move each network by a random signed permutation of axes, shift and lamp flip. Sort all segments into bins by midpoint and direction. Use $D$ signed permutations $A_j$ that anticommute in pairs, so the vectors $A_jv$ are perpendicular for each $v$. That makes bundles of perpendicular crossings: exactly the shape $C_{D,m}$ where the shortening applies. Then remove the randomness by the method of conditional expectations, so that a program can recompute the schedule.</li>
+<li><b>Result.</b> After $T=\lfloor\tau\log n\rfloor$ epochs, the charged length per team is $o(X_0)$. The remaining crossing traffic is dominated by the primed exterior links: width at most $RX_0/2+o(RX_0)$.</li>
+</ul>
+
+<div class="aha"><b>AHA 6. Build a space in which the saving repeats.</b> A single shortening is a local gadget. The windowed host is locally Euclidean along many axes and has very large routing room, so random motions line up wires into perpendicular bundles again after each round. The schedule is deterministic and cheap to recompute because "our diagonal program must itself recreate the schedules, inside its tick budget".</div>
+
+<h3 id="c8">C8. The final squeeze: 11/12</h3>
+
+<p>The exterior links are too few and too dispersed for bulk shortening. The capacity between each <em>pair</em> of teams must be enough, with room for a ledger. The paper needs one more constant-factor saving. It adapts "the striking square scheme" of a different AI paper, cited as <em>Claude (Anthropic), A $2^{o(n)}$ Time Algorithm for 3-SAT</em>.</p>
+
+<ul>
+<li>Give each cell a label in a $d\times d$ grid, $d=R^{16}$. Group wires into <b>packets</b> on the two diagonals of a rectangle of labels, three bits on each.</li>
+<li><b>Packet identity.</b> With indices $x,y$ (8 values) at one pair of opposite corners and $i,j$ at the other:
+$$\mathbf 1_{x=y}\mathbf 1_{i=j}=\sum_{z=1}^{8}A(x,i,z)B(y,j,z)+\sum_{z=1}^{8}C(y,i,z)D'(x,j,z),$$
+with fixed integer arrays. It comes from the exterior algebra on four generators: wedge and contraction operators satisfy $Q_yP_x+P_xQ_y=\delta_{xy}I$.</li>
+<li><b>Count.</b> Two unaltered diagonals cost 6 bits for either grouping of the corners. With the identity and one selector bit, a term costs 4 for one grouping and 7 for the other: 11 for the two groupings in place of 12. Choosing the grouping by public histograms gives total width at most $(11/12)P+O(P/d)$.</li>
+<li>Assign symbols to teams by conditional expectations. Each pair of teams gets at most $(11/12+o(1))X_0/R$ bits, which fits the physical links.</li>
+</ul>
+
+<div class="aha"><b>AHA 7. Two crossing wires again.</b> The squeeze is an identity for two wires that cross, which splits them into a term cheap across one cut plus a term cheap across the other. Compare the Anthropic crossing identity (B5). There it produces a curvature law. Here it produces an 8% saving in capacity. (The comparison is my reading; neither paper mentions the other.)</div>
+
+<h3 id="c9">C9. Assembly and the accounting identity</h3>
+<ul>
+<li><b>Common ledger.</b> All teams hold copies of one guessed ledger: a branch bit, copies of the literal fields, the proposed exponent vectors, epoch profiles, squeeze histograms and "color" subtotals. Equality is checked at each team.</li>
+<li><b>Unit branch.</b> All other bits are forced to zero and team one tests the pin for equality with $\ast$. Contribution: exactly $e_\ast$.</li>
+<li><b>Replay branch.</b> Each team rebuilds the public schedules in $O(rn^{.95})$ ticks, handles its assigned cells by private subroutine calls, and counts. "There is no arithmetic in a huge finite field here: only tally color names." Team one inserts the weight $\pi(\lambda)(W_\mu)_{I,H}$ as a path multiplicity.</li>
+<li><b>Accounting identity.</b> Each accepting path corresponds to exactly one term of the fully expanded sum, with no extra multiplicity. The sum is $([X^\mu]F_I(Y(X)))\,(W_\mu)_{I,H}$. Add the unit branch: this is Lemma 3.2.</li>
+</ul>
+<p>A last section gives a "low degree application": clique polynomials with clique size $\lceil\log^AN\rceil$ have border complexity $\exp(\Omega((\log N)^{5/4}))$.</p>
+
+<h3 id="c10">C10. The Lean formalization and the 24 November papers</h3>
+<ul>
+<li><b>What the Comparator target states.</b> <code>lean/ComparatorChallenges/VPVNP.lean</code>, 59 lines, imports only Mathlib. It defines circuits, VP and VNP and states one theorem, <code>vp_ne_vnp</code>: for each field, the predicate "is in VP" differs from "is in VNP" on families with variables $\mathrm{Fin}\,n\times\mathrm{Bool}$ (the $2n$ variables of $f_n$). The configuration file has <code>"enable_nanoda": false</code>.</li>
+<li><b>What the Lean proof file adds.</b> <code>Separation.lean</code> also proves <code>separation_lower_bound</code>: for each exponent $C$ and characteristic $q$, the exact circuit size of the family is more than $n^C$ for large $n$; and <code>corollary12</code>: the same for Hamiltonian cycle and, if $q\neq2$, the permanent.</li>
+<li><b>A quantitative bound exists in the library, outside the Comparator target.</b> <code>QuantitativeSeparation.lean</code> states <code>pstar_circuit_lower_bound</code>: each <em>exact</em> circuit for the "signed path-count polynomial" <code>Pstar n</code> has at least $2^{c(\log_2 n)^{5/4}}$ gates, with absolute $c$ and a threshold per characteristic. Its proof goes through a border-size bound inside the library. I did not determine if <code>Pstar</code> equals the paper's $f_n$: the Lean name says <em>signed</em> count, the paper says a count of accepting paths.</li>
+<li><b>What is not listed as formalized, by the scope document <code>lean/docs/379.md</code>.</b> A border form of Theorem 1.1 as a stated theorem, and quantitative bounds for Hamiltonian cycle and the permanent (for these two, Lean has "more than $N^C$ for each $C$", exact circuits).</li>
+<li><b>Size.</b> The folder <code>lean/OAI/Computability/VPVNP</code> has 3,146 files and 21,934,285 bytes (my count on 25 November). It was changed again by the 24 November commit.</li>
+<li><b>Route of the Lean proof: not determined by me.</b> The folder contains files such as <code>CATZeroEquality.lean</code> and <code>Barycenter.lean</code> in a namespace <code>SpectralGeometry</code>. The 23 November paper has no CAT(0) argument. I did not trace which files the theorem depends on.</li>
+</ul>
+
+<h4>The 24 November papers (short note)</h4>
+<p>The README says two later preprints "subsume the results of this preprint". The 23 November manuscript "remains available unchanged".</p>
+<ul>
+<li><b><em>Paths, trees and grids separate Valiant's hierarchy.</em></b> The state sum on an $n\times n$ grid is in VNP and needs circuits of size $n^{\Omega((\log n)^{1/12})}$. State sums on paths and binary trees separate formulas from branching programs and branching programs from circuits: $\mathrm{VF}\subsetneq\mathrm{VBP}\subsetneq\mathrm{VP}\subsetneq\mathrm{VNP}$ over each field. Lean proves the three strict inclusions for exact classes; the explicit grid bound "remains unformalized".</li>
+<li><b><em>Circuit lower bounds for Hamiltonian cycle and the permanent.</em></b> Bound $\exp\!\big(c(\log N)^2/(\log\log N)^2\big)$ for $\operatorname{HC}_N$ over each field and for the permanent outside characteristic two, for circuits that approximate the degree-$N$ part. In Lean: only "more than $N^C$" for exact circuits.</li>
+<li>Both belong to a family of seven papers, <em>Euclidean tensor geometry and its applications to complexity and combinatorics</em>. I did not read these papers. The statements above are from their READMEs and the scope document <code>lean/docs/379.md</code>.</li>
+</ul>
+
+<h3 id="c11">C11. All the AHA moments of the OpenAI proof</h3>
+<ol>
+<li>A witness polynomial whose coefficients are a universal machine (<a href="#c1">C1</a>).</li>
+<li>A dichotomy that is true by logic: strict shortening exists or not (<a href="#c2">C2</a>).</li>
+<li>No shortening: expander + two hubs + shift the hub toward the resultant; varying cuts are allowed (<a href="#c3">C3</a>).</li>
+<li>Shortening: replay + boundary lemmas give $e_\ast\Omega=0$ at a nonzero entry (<a href="#c4">C4</a>).</li>
+<li>Read a limit circuit through residues and Cartier operators; the limit value is an eigenvalue (<a href="#c5">C5</a>).</li>
+<li>Batching by parse trees: one circuit serves all queries at cost about the degree (<a href="#c4">C4</a>, <a href="#c6">C6</a>).</li>
+<li>The replay is itself a wire network, so the shortening applies to the argument's own computation (<a href="#c6">C6</a>).</li>
+<li>A windowed host space where the saving repeats each epoch (<a href="#c7">C7</a>).</li>
+<li>A crossing-wires identity from the exterior algebra gives the last 1/12 (<a href="#c8">C8</a>).</li>
+<li>Exact counting: each accepting path is one term, so the diagonal identity holds exactly (<a href="#c9">C9</a>).</li>
+</ol>
+
+<h2 id="partd">Part D. Comparison</h2>
+
+<h3 id="d1">D1. Same skeleton</h3>
+
+<p>The video source says the main idea "turns out to be the same in both". The texts support this at the level of the skeleton. Neither paper cites the other's VP paper.</p>
+
+<div class="tw"><table>
+<tr><th>Stage</th><th>Anthropic</th><th>OpenAI (23 Nov)</th></tr>
+<tr><td>Price wires by length</td><td>Distance $d_\varphi$ from a spectral point; "price"</td><td>Width × Euclidean distance, by definition</td></tr>
+<tr><td>Rank → two hubs + bridge</td><td><code>lem_hubs</code>, inequality (2.3)</td><td>"stream all bits in to two hubs"; bridge $h$</td></tr>
+<tr><td>Circuit → balanced cuts</td><td><code>lem_balanced</code>; cost $k$ bits (then about $k^{3/2}$)</td><td>balanced-product decomposition; selection cost $2Dd$</td></tr>
+<tr><td>Dichotomy</td><td>flat / contracting (Theorem 2.2, proved)</td><td>no strict shortening / strict shortening (by logic)</td></tr>
+<tr><td>Geometry case: graph</td><td>complete graph, $k$ nodes, $\ell$ bits per edge</td><td>bounded-degree expander, $d$ vertices, $m$ bits per edge</td></tr>
+<tr><td>Geometry case: key move</td><td colspan="2">shift a hub toward the sum vector of its terminals; the bridge must pay</td></tr>
+<tr><td>Other case: resource</td><td>rerouting laws from Poincaré inequality + duality</td><td>the strict shortening itself</td></tr>
+<tr><td>Other case: iterate the saving</td><td>tree networks; cutting theorem at all scales</td><td>epoch lemma on a windowed host; 11/12 squeeze</td></tr>
+<tr><td>Other case: use the circuit</td><td>evaluation lemma: parse trees, cost ~ degree; constants named</td><td>batch algorithm: parse trees, cost ~ degree; parameter histograms</td></tr>
+<tr><td>Other case: contradiction</td><td>$V=1+V$ in a finite field</td><td>$e_\ast\Omega=0$ with $\Omega_\ast\neq0$ over a prime field</td></tr>
+</table></div>
+
+<h3 id="d2">D2. Results side by side</h3>
+
+<div class="tw"><table>
+<tr><th></th><th>Anthropic</th><th>OpenAI (23 Nov)</th></tr>
+<tr><td>Main bound, permanent / HC of order $m$</td><td>$2^{c(\log m)^{4/3}}$</td><td>$\exp(\Omega((\log m)^{5/4}))$ (Corollary 1.2)</td></tr>
+<tr><td>Which is larger</td><td colspan="2">Anthropic's: exponent $4/3\approx1.333$ against $5/4=1.25$ on $\log m$. The OpenAI paper of 24 November states $\exp(c(\log N)^2/(\log\log N)^2)$, which is larger than both.</td></tr>
+<tr><td>Bound in the geometry case</td><td>$2^{(\log m)^{4/3}/1600^2}$, explicit constant</td><td>$\exp(\Omega((\log n)^{5/4}))$ for $f_n$</td></tr>
+<tr><td>Bound in the other case</td><td>$2^{c(\log m)^2/\log\log m}$ for the permanent</td><td>$2^{n^\sigma}$ for $f_n$ (the paper does not restate it for the permanent)</td></tr>
+<tr><td>Hard polynomial in the theorem</td><td>$\operatorname{HC}_m$ and $\operatorname{PERM}_m$ directly</td><td>$f_n$; HC and permanent by Corollary 1.2</td></tr>
+<tr><td>Completeness reduction</td><td>own explicit constructions (Props. E.1, M.2), formalized</td><td>classical theorems, cited</td></tr>
+<tr><td>Fields</td><td>each field; $m_0$ depends on the characteristic</td><td>each field</td></tr>
+<tr><td>Border (approximation)</td><td>yes (Theorem 1.4, Appendix N, added after the exact case). Consequence for determinantal complexity stated in Remark N.6, not formalized</td><td>yes, from the first line. Consequences for determinantal complexity and orbit closure stated in Corollary 1.2</td></tr>
+<tr><td>Which case holds?</td><td>"We do not know ... even over $\mathbb R$"</td><td>not decided</td></tr>
+<tr><td>Effective threshold</td><td>no value for $m_0$</td><td>asymptotic $\Omega$; no values</td></tr>
+<tr><td>Says it does not settle P vs NP</td><td>yes, in the abstract</td><td>yes, in the introduction</td></tr>
+</table></div>
+
+<div class="mine"><b>My reading of 4/3 against 5/4.</b> Both exponents come from the same balance: (bits per edge) × (a power of the number of vertices) must exceed the cost of naming the cut. Anthropic uses a dense graph: about $k^2$ wires cross each cut, the sum vector has length about $k^{3/2}$, and the size is $\log m\approx k\ell$. OpenAI uses a sparse graph: about $d$ edges cross, the sum vector has norm about $\sqrt d$, and the size is $\log n\approx m$ independent of $d$. With these counts the arithmetic gives $r^4$ against $r^3$, and $m\cdot m^{1/4}$ against $m$. Neither paper compares the two choices.</div>
+
+<h3 id="d3">D3. Step-by-step differences</h3>
+
+<div class="tw"><table>
+<tr><th>Topic</th><th>Anthropic</th><th>OpenAI (23 Nov)</th></tr>
+<tr><td>Where the geometry comes from</td><td>Derived. Spectral points (Strassen) → metric → crossing identity → CAT(0). About 4 appendices (A to D).</td><td>Postulated. Euclidean pricing and Definition 2.1. About half a page.</td></tr>
+<tr><td>Cost of the dichotomy</td><td>A theorem with a compactness argument and CAT(0) facts</td><td>None</td></tr>
+<tr><td>What "geometry fails" means</td><td>All prices on a test set contract by a fixed factor</td><td>One fixed tensor identity beats straight wires</td></tr>
+<tr><td>From "fails" to a usable identity</td><td>Needs Strassen duality (non-explicit identities)</td><td>The identity is the hypothesis</td></tr>
+<tr><td>Non-constructive tools</td><td>Zorn's lemma for spectral points; an ultrafilter limit in Appendix C</td><td>None of this kind in the paper; algebraic geometry is used for the boundary lemma</td></tr>
+<tr><td>Witness polynomials</td><td>Two: $f_{k,\ell}$ (flat) and $\Phi$ (contracting)</td><td>One: $f_n$; the state sum $g$ is a projection of it</td></tr>
+<tr><td>Arbitrary constants</td><td>Named in a tally; moved in front of the sum; reduced to a finite field (Eisenbud, Thm 4.19)</td><td>Parameter monomials weighted by matrices; prime of polynomial bit length</td></tr>
+<tr><td>Limit circuits</td><td>Laurent series; cut to Laurent polynomials; "approximate accelerators"</td><td>Curve through the boundary point; residues; Cartier operators</td></tr>
+<tr><td>Computation model</td><td>Programs on binary trees; tape automaton; weights in a ring $A$</td><td>Universal machine paths; RAM with sorting-checked transcripts</td></tr>
+<tr><td>Scale trick</td><td>Transfer the accelerator to scale $v^\alpha$ where the advice is short</td><td>One very large network of $R$ teams × $r=2^{\lceil n^\rho\rceil}$ processors; advice $\operatorname{poly}(M)\ll r$</td></tr>
+<tr><td>Self-check against the determinant / Boolean case</td><td>Section 2.5 locates the exact failing steps</td><td>Not discussed in this form</td></tr>
+<tr><td>Relation to earlier AI papers</td><td>Cites OpenAI's cubic border bound as related work</td><td>Adapts the square scheme of Anthropic's 3-SAT paper for the squeeze</td></tr>
+</table></div>
+
+<h3 id="d4">D4. What the machine checked</h3>
+
+<div class="tw"><table>
+<tr><th></th><th>Anthropic</th><th>OpenAI (23 Nov)</th></tr>
+<tr><td>Theorems in the Comparator target</td><td>5: main theorem, approximate form, VP ⊊ VNP, VNP ⊄ closure of VP, permanent over $\mathbb R$</td><td>1: VP ≠ VNP (exact classes)</td></tr>
+<tr><td>Quantitative bound in Lean</td><td>yes, in the target: $m^{c(\log_2m)^{1/3}}$ for HC and permanent (<code>Beyond</code>)</td><td>not in the target. In the library: $2^{c(\log_2n)^{5/4}}$ for exact circuits for <code>Pstar</code>; "more than $N^C$ for each $C$" for HC and permanent</td></tr>
+<tr><td>Border version in Lean</td><td>yes (<code>Approximates</code>, <code>VPBar</code>)</td><td>not in the target; used inside the library proof; not listed as a stated theorem for this paper</td></tr>
+<tr><td>HC and permanent in the target</td><td>yes, defined in the statement file</td><td>not in the target; <code>corollary12</code> is in the proof file</td></tr>
+<tr><td>Second kernel (nanoda)</td><td>enabled</td><td>disabled</td></tr>
+<tr><td>Statement file</td><td>98 lines</td><td>59 lines</td></tr>
+<tr><td>Gate count convention</td><td>variables and constants count as gates; $+$, $\times$</td><td>variables and scalars free; $+$, $-$, $\times$</td></tr>
+<tr><td>"Polynomially bounded"</td><td>$\le n^a+a$ for all $n$</td><td>$\le A\,n^d$ for all $n\ge N$</td></tr>
+<tr><td>Lean size</td><td>324 files, 3.4 MB</td><td>3,146 files, 21.9 MB (folder, after the 24 Nov commit)</td></tr>
+<tr><td>Map from paper to Lean</td><td>Table 3 (each numbered statement) and 3 pages of listed differences</td><td>One link from the README to the theorem; a scope document for the family</td></tr>
+<tr><td>Paper says a human checked it</td><td>no ("No human mathematician has checked")</td><td>no claim of human checking</td></tr>
+</table></div>
+
+<p>My reading, not proved here: the differences in conventions (free leaves or counted leaves; subtraction; the form of the polynomial bound) change sizes by small factors and give the same classes VP and VNP. The Anthropic paper notes a factor of at most three for its own convention.</p>
+
+<div class="warn"><b>What a Lean check does and does not give.</b> Lean certifies that the formal proof proves the formal statement. It does not certify that the formal statement is the mathematical one. A human must read the statement files (98 and 59 lines) and judge that. For the OpenAI paper there is a second gap: the Comparator target has only the class separation. The $5/4$ bound is in the library for exact circuits and a polynomial named <code>Pstar</code>, outside the target. The border form of Theorem 1.1 and the quantitative Corollary 1.2 rest on the 30-page text. I did not run either build.</div>
+
+<h3 id="d5">D5. Quality, complexity, elegance, readability</h3>
+
+<p>The rows "observable" are facts I measured. The rows "my judgment" are opinions; a specialist can disagree.</p>
+
+<div class="tw"><table>
+<tr><th>Criterion</th><th>Anthropic</th><th>OpenAI (23 Nov)</th></tr>
+<tr><td>Length (observable)</td><td>70 pages; about 48,000 words in the text extraction, with references and the printed Lean file</td><td>30 pages; about 15,100 words</td></tr>
+<tr><td>Formal statement structure (observable)</td><td>Numbered definitions, lemmas, propositions, theorems in Appendices A to N; glossary of coined terms (Appendix P); dependency table; structure figure</td><td>2 theorems, 1 corollary, 6 lemmas, 1 proposition, 1 definition; three figures; most of Sections 6 to 9 is prose with inline parameters</td></tr>
+<tr><td>Overview for a non-specialist (observable)</td><td>Section 2, about 7 pages, with "where the permanent enters" and "where the circuit enters"</td><td>"Strategy" paragraph, about 1 page</td></tr>
+<tr><td>Number of distinct theories used (observable)</td><td>Asymptotic spectrum and duality; CAT(0) geometry; Poincaré inequality on unitriangular groups; tree decomposition of networks; machine models; diagonalization</td><td>Euclidean rerouting; expanders; degree bounds in algebraic geometry; Cartier operators and residues; RAM compilation by sorting networks; derandomization by conditional expectations; exterior algebra; diagonalization</td></tr>
+<tr><td>Self-reported weak points (observable)</td><td>Four statements checkable only in Lean; $m_0$ not effective; case not known; statements judged only by AI readers</td><td>Repository: manuscripts are "raw research data"; "Some of the unformalized results could have issues"</td></tr>
+<tr><td>Quality of evidence (my judgment)</td><td>Stronger. The Lean target covers the quantitative theorem, the border theorem and the two named polynomials, with a second kernel.</td><td>Weaker for the paper's own theorem. The independently compared target is the exact class separation, with one kernel. A $5/4$ bound for exact circuits is in the library but not in the target; the border form and Corollary 1.2 rest on dense text.</td></tr>
+<tr><td>Strength of the stated theorem (my judgment)</td><td>Larger exponent ($4/3$).</td><td>Smaller exponent ($5/4$). Both papers state the consequence for determinantal complexity. OpenAI also states the orbit-closure form and a clique-polynomial bound.</td></tr>
+<tr><td>Conceptual complexity (my judgment)</td><td>Higher entry cost. The reader must accept spectral points and CAT(0) geometry before the first bound.</td><td>Lower entry cost for case 1 (one page from a definition). Higher cost for case 2: the replay construction has many interacting parameters ($R$, $r$, $T$, $\xi$, $X_0$, $d$, $Z_0$).</td></tr>
+<tr><td>Elegance (my judgment)</td><td>The geometry is <em>explained</em>: the paper shows why Euclidean-type lengths appear (crossing identity → curvature). The diagonal $V=1+V$ is one line. The cost is length.</td><td>The hinge is the most economical idea in either paper: a tautological dichotomy and a one-page direct case. The three-line proof of the stretch theorem from two lemmas is also clean. The replay construction is engineering-heavy.</td></tr>
+<tr><td>Readability by a human (my judgment)</td><td>Better. Terms are defined before use, coined words are listed, each step has a name that links to Lean, and the paper says which printed proofs are complete.</td><td>Harder. Sentences are compressed, notation is reused ("new notation in this section"), and many steps are asserted with "indeed" plus a short reason. A reader must rebuild many details.</td></tr>
+<tr><td>Ease of checking by a referee (my judgment)</td><td>Flat case: checkable on paper (Appendix E "treats the flat case completely"). Contracting case: depends on Lean at four points.</td><td>Case 1: about one page of proof, on paper. Case 2: Sections 4 to 9, about 20 pages of compressed construction with no Lean theorem named for the individual lemmas in the paper.</td></tr>
+</table></div>
+
+<div class="mine"><b>One-paragraph summary (my judgment).</b> The two proofs share one skeleton: price wires by length, turn rank into a two-hub routing, split into "geometry is rigid" and "geometry can be beaten", prove the bound by a hub shift in the first case and by diagonalization against a sped-up computation in the second. OpenAI's version takes the geometry as a definition and reaches the first bound faster. Anthropic's version derives the geometry from tensor theory and spends 40 more pages, but gives a larger exponent, a readable map, and a Comparator-checked formal statement that covers the theorem as stated.</div>
+
+<h3 id="d6">D6. What stays open</h3>
+<ul>
+<li><b>Human verification.</b> As of 25 November 2026, neither paper claims a human check. The video source says the first posts by complexity theorists discuss the results "without claiming to have verified them".</li>
+<li><b>The statement files.</b> Do the Lean definitions of circuit, VP and VNP match the textbook ones? This is the short task that decides how much the Lean checks are worth.</li>
+<li><b>Which case is true?</b> Flat or contracting; shortening or none. Neither paper decides. The true bound depends on it.</li>
+<li><b>The gap.</b> Lower bounds: quasipolynomial, $2^{(\log m)^{4/3}}$ up to $2^{(\log m)^2/\operatorname{polylog}}$. Upper bounds: $2^{O(m)}$.</li>
+<li><b>P versus NP.</b> Open. The algebraic result does not imply the Boolean one (A4).</li>
+</ul>
+
+<hr>
+
+<h2 id="sources">Sources and method</h2>
+<ul>
+<li><b>Anthropic.</b> <a href="https://github.com/anthropics/formal-math/tree/main/vp-vnp">github.com/anthropics/formal-math/tree/main/vp-vnp</a>: <code>paper.pdf</code> (Sections 1 to 3 read in full; appendix statements and Appendices L, P, Q read; long appendix proofs not read line by line), <code>README.md</code>, <code>Statement.lean</code>, <code>Challenge.lean</code>, <code>comparator.json</code>. Copies of the two statement files in this repository: <code>sources/anthropic/</code>.</li>
+<li><b>OpenAI.</b> <a href="https://github.com/openai/math/tree/main/preprints/VP-and-VNP-are-different-November-23-2026">github.com/openai/math/…/VP-and-VNP-are-different-November-23-2026</a>: <code>build/Paper.tex</code> read in full, the three figure sources, <code>README.md</code>, <code>lean/ComparatorChallenges/VPVNP.lean</code> and <code>.json</code>, <code>ClassSeparation.lean</code>, <code>Separation.lean</code>, <code>lean/docs/379.md</code>, <code>history.md</code>. Copy of the Comparator statement file in this repository: <code>sources/openai/VPVNP.lean</code>.</li>
+<li><b>Video.</b> "VP ≠ VNP: what the two AI proofs actually do", channel Dirac, 14:17, <a href="https://www.youtube.com/watch?v=HgqnBtPGmww">youtube.com/watch?v=HgqnBtPGmww</a>. Used through its automatic English captions, which misspell technical terms. Used for orientation and for the facts attributed to "the video source". The video gives 1:43 PM Pacific on 23 November for the Anthropic publication and "just under 4 hours later" for OpenAI. The Git commit times I read are 20:04:44Z on 23 November and 01:20:59Z on 24 November. I give both and do not reconcile them.</li>
+<li><b>Not done.</b> No Lean build was run. The two OpenAI papers of 24 November were not read. No step of either proof was independently re-proved, except the numeric check in <code>hub_shift_check.py</code>.</li>
+</ul>
+
+
+<script>
+// Tabs: wrap everything from each part heading up to the next part heading in a panel.
+// Runs after MathJax has typeset, so hidden panels do not get wrong math sizes.
+var tabsReady = false;
+function showPart(id, target){
+  document.querySelectorAll('.panel').forEach(function(p){ p.hidden = (p.dataset.part !== id); });
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    b.setAttribute('aria-selected', b.dataset.part === id ? 'true' : 'false'); });
+  (target || document.querySelector('.tabs')).scrollIntoView();
+}
+function goToHash(){
+  var el = location.hash && document.getElementById(location.hash.slice(1));
+  var panel = el && el.closest('.panel');
+  if(panel) showPart(panel.dataset.part, el);
+}
+function initTabs(){
+  if(tabsReady) return; tabsReady = true;
+  ['parta','partb','partc','partd'].forEach(function(id){
+    var h = document.getElementById(id), panel = document.createElement('div');
+    panel.className = 'panel'; panel.dataset.part = id;
+    h.parentNode.insertBefore(panel, h);
+    var n = h;
+    while(n && !(n !== h && n.nodeType === 1 && /^part[a-d]$/.test(n.id)) && n.nodeName !== 'SCRIPT'){
+      var next = n.nextSibling; panel.appendChild(n); n = next;
+    }
+  });
+  document.querySelectorAll('.tabs button').forEach(function(b){
+    b.addEventListener('click', function(){ history.replaceState(null, '', '#' + b.dataset.part); showPart(b.dataset.part); });
+  });
+  window.addEventListener('hashchange', goToHash);
+  showPart('parta', document.body);
+  goToHash();
+}
+</script>
+</body>
+</html>

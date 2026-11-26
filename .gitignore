@@ -1,0 +1,7 @@
+# Local working copies of third-party material; the README links to the originals.
+sources/**/paper.pdf
+sources/**/paper.txt
+sources/**/Paper.tex
+sources/openai/README.md
+transcripts/
+.impeccable/
