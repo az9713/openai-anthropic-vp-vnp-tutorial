@@ -2,7 +2,7 @@
 
 A tutorial on the two proofs of VP ≠ VNP that Anthropic and OpenAI published on 23 November 2026.
 
-**Read it as a live page: https://az9713.github.io/openai-anthropic-vp-vnp/**
+**Read it as a live page: https://az9713.github.io/openai-anthropic-vp-vnp-tutorial/**
 
 The page has four tabs:
 
@@ -28,7 +28,7 @@ These are the sources listed in `README.txt`:
 2. Anthropic paper and Lean proof — https://github.com/anthropics/formal-math/tree/main/vp-vnp
 3. OpenAI paper and Lean proof — https://github.com/openai/math/tree/main/preprints/VP-and-VNP-are-different-November-23-2026
 
-The tutorial's last section, [Sources and method](https://az9713.github.io/openai-anthropic-vp-vnp/#sources), lists which files of each source were read and what was not done.
+The tutorial's last section, [Sources and method](https://az9713.github.io/openai-anthropic-vp-vnp-tutorial/#sources), lists which files of each source were read and what was not done.
 
 ## Files
 
